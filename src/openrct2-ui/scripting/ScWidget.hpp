@@ -122,9 +122,32 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
+                auto delta = value - widget->left;
+
                 Invalidate();
-                widget->right = value + widget->right - widget->left;
-                widget->left = value;
+                widget->left += delta;
+                widget->right += delta;
+
+                if (widget->type == WWT_DROPDOWN)
+                {
+                    auto buttonWidget = widget + 1;
+                    buttonWidget->left += delta;
+                    buttonWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+                }
+                else if (widget->type == WWT_SPINNER)
+                {
+                    auto upWidget = widget + 1;
+                    upWidget->left += delta;
+                    upWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+
+                    auto downWidget = widget + 2;
+                    downWidget->left += delta;
+                    downWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 2);
+                }
+
                 Invalidate();
             }
         }
@@ -143,9 +166,32 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
+                auto delta = value - widget->top;
+
                 Invalidate();
-                widget->bottom = value + widget->bottom - widget->top;
-                widget->top = value;
+                widget->top += delta;
+                widget->bottom += delta;
+
+                if (widget->type == WWT_DROPDOWN)
+                {
+                    auto buttonWidget = widget + 1;
+                    buttonWidget->top += delta;
+                    buttonWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+                }
+                else if (widget->type == WWT_SPINNER)
+                {
+                    auto upWidget = widget + 1;
+                    upWidget->top += delta;
+                    upWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+
+                    auto downWidget = widget + 2;
+                    downWidget->top += delta;
+                    downWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 2);
+                }
+
                 Invalidate();
             }
         }
@@ -155,7 +201,7 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
-                return widget->right - widget->left;
+                return widget->width();
             }
             return 0;
         }
@@ -164,8 +210,31 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
+                auto delta = widget->left + value - widget->right;
+
                 Invalidate();
-                widget->right = widget->left + value;
+                widget->right += delta;
+
+                if (widget->type == WWT_DROPDOWN)
+                {
+                    auto buttonWidget = widget + 1;
+                    buttonWidget->left += delta;
+                    buttonWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+                }
+                else if (widget->type == WWT_SPINNER)
+                {
+                    auto upWidget = widget + 1;
+                    upWidget->left += delta;
+                    upWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+
+                    auto downWidget = widget + 2;
+                    downWidget->left += delta;
+                    downWidget->right += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 2);
+                }
+
                 Invalidate();
             }
         }
@@ -175,7 +244,7 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
-                return widget->bottom - widget->top;
+                return widget->height();
             }
             return 0;
         }
@@ -184,8 +253,28 @@ namespace OpenRCT2::Scripting
             auto widget = GetWidget();
             if (widget != nullptr)
             {
+                auto delta = widget->top + value - widget->bottom;
+
                 Invalidate();
-                widget->bottom = widget->top + value;
+                widget->bottom += delta;
+
+                if (widget->type == WWT_DROPDOWN)
+                {
+                    auto buttonWidget = widget + 1;
+                    buttonWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+                }
+                else if (widget->type == WWT_SPINNER)
+                {
+                    auto upWidget = widget + 1;
+                    upWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 1);
+
+                    auto downWidget = widget + 2;
+                    downWidget->bottom += delta;
+                    widget_invalidate_by_number(_class, _number, _widgetIndex + 2);
+                }
+
                 Invalidate();
             }
         }
@@ -209,27 +298,6 @@ namespace OpenRCT2::Scripting
                     w->disabled_widgets |= mask;
                 else
                     w->disabled_widgets &= ~mask;
-            }
-        }
-
-        uint32_t image_get() const
-        {
-            if (IsCustomWindow())
-            {
-                auto widget = GetWidget();
-                if (widget != nullptr && widget->type == WWT_FLATBTN)
-                {
-                    return widget->image;
-                }
-            }
-            return 0;
-        }
-        void image_set(uint32_t value)
-        {
-            auto widget = GetWidget();
-            if (widget != nullptr && widget->type == WWT_FLATBTN)
-            {
-                widget->image = value;
             }
         }
 
@@ -281,7 +349,6 @@ namespace OpenRCT2::Scripting
             dukglue_register_property(ctx, &ScWidget::isDisabled_get, &ScWidget::isDisabled_set, "isDisabled");
 
             // No so common
-            dukglue_register_property(ctx, &ScWidget::image_get, &ScWidget::image_set, "image");
             dukglue_register_property(ctx, &ScWidget::text_get, &ScWidget::text_set, "text");
             dukglue_register_property(ctx, &ScWidget::viewport_get, nullptr, "viewport");
         }
@@ -321,6 +388,84 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    class ScButtonWidget : public ScWidget
+    {
+    public:
+        ScButtonWidget(rct_windowclass c, rct_windownumber n, rct_widgetindex widgetIndex)
+            : ScWidget(c, n, widgetIndex)
+        {
+        }
+
+        static void Register(duk_context* ctx)
+        {
+            dukglue_set_base_class<ScWidget, ScButtonWidget>(ctx);
+            dukglue_register_property(ctx, &ScButtonWidget::border_get, &ScButtonWidget::border_set, "border");
+            dukglue_register_property(ctx, &ScButtonWidget::isPressed_get, &ScButtonWidget::isPressed_set, "isPressed");
+            dukglue_register_property(ctx, &ScButtonWidget::image_get, &ScButtonWidget::image_set, "image");
+        }
+
+    private:
+        bool border_get() const
+        {
+            auto widget = GetWidget();
+            if (widget != nullptr)
+            {
+                return widget->type == WWT_IMGBTN;
+            }
+            return false;
+        }
+        void border_set(bool value)
+        {
+            auto widget = GetWidget();
+            if (widget != nullptr && (widget->type == WWT_FLATBTN || widget->type == WWT_IMGBTN))
+            {
+                if (value)
+                    widget->type = WWT_IMGBTN;
+                else
+                    widget->type = WWT_FLATBTN;
+                Invalidate();
+            }
+        }
+
+        bool isPressed_get() const
+        {
+            auto w = GetWindow();
+            if (w != nullptr)
+            {
+                return widget_is_pressed(w, _widgetIndex);
+            }
+            return false;
+        }
+        void isPressed_set(bool value)
+        {
+            auto w = GetWindow();
+            if (w != nullptr)
+            {
+                widget_set_checkbox_value(w, _widgetIndex, value ? 1 : 0);
+                Invalidate();
+            }
+        }
+
+        uint32_t image_get() const
+        {
+            auto widget = GetWidget();
+            if (widget != nullptr && widget->type == WWT_FLATBTN)
+            {
+                return widget->image;
+            }
+            return 0;
+        }
+        void image_set(uint32_t value)
+        {
+            auto widget = GetWidget();
+            if (widget != nullptr && widget->type == WWT_FLATBTN)
+            {
+                widget->image = value;
+                Invalidate();
+            }
+        }
+    };
+
     class ScCheckBoxWidget : public ScWidget
     {
     public:
@@ -351,6 +496,7 @@ namespace OpenRCT2::Scripting
             if (w != nullptr)
             {
                 widget_set_checkbox_value(w, _widgetIndex, value ? 1 : 0);
+                Invalidate();
             }
         }
     };
@@ -608,6 +754,10 @@ namespace OpenRCT2::Scripting
         auto n = w->number;
         switch (widget.type)
         {
+            case WWT_BUTTON:
+            case WWT_FLATBTN:
+            case WWT_IMGBTN:
+                return GetObjectAsDukValue(ctx, std::make_shared<ScButtonWidget>(c, n, widgetIndex));
             case WWT_CHECKBOX:
                 return GetObjectAsDukValue(ctx, std::make_shared<ScCheckBoxWidget>(c, n, widgetIndex));
             case WWT_DROPDOWN:

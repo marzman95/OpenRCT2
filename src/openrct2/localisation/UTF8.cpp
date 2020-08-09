@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -179,7 +179,7 @@ void utf8_remove_formatting(utf8* string, bool allowColours)
 
     while (true)
     {
-        char32_t code = utf8_get_next(readPtr, (const utf8**)&readPtr);
+        char32_t code = utf8_get_next(readPtr, const_cast<const utf8**>(&readPtr));
 
         if (code == 0)
         {

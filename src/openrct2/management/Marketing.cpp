@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -85,7 +85,7 @@ static void marketing_raise_finished_notification(const MarketingCampaign& campa
             ft.Add<rct_string_id>(ShopItems[campaign.ShopItemType].Naming.Plural);
         }
 
-        news_item_add_to_queue(NEWS_ITEM_MONEY, MarketingCampaignNames[campaign.Type][2], 0);
+        News::AddItemToQueue(News::ItemType::Money, MarketingCampaignNames[campaign.Type][2], 0);
     }
 }
 
@@ -136,29 +136,29 @@ void marketing_set_guest_campaign(Peep* peep, int32_t campaignType)
     {
         case ADVERTISING_CAMPAIGN_PARK_ENTRY_FREE:
             peep->ItemStandardFlags |= PEEP_ITEM_VOUCHER;
-            peep->voucher_type = VOUCHER_TYPE_PARK_ENTRY_FREE;
+            peep->VoucherType = VOUCHER_TYPE_PARK_ENTRY_FREE;
             break;
         case ADVERTISING_CAMPAIGN_RIDE_FREE:
             peep->ItemStandardFlags |= PEEP_ITEM_VOUCHER;
-            peep->voucher_type = VOUCHER_TYPE_RIDE_FREE;
-            peep->voucher_arguments = campaign->RideId;
-            peep->guest_heading_to_ride_id = campaign->RideId;
-            peep->peep_is_lost_countdown = 240;
+            peep->VoucherType = VOUCHER_TYPE_RIDE_FREE;
+            peep->VoucherRideId = campaign->RideId;
+            peep->GuestHeadingToRideId = campaign->RideId;
+            peep->GuestIsLostCountdown = 240;
             break;
         case ADVERTISING_CAMPAIGN_PARK_ENTRY_HALF_PRICE:
             peep->ItemStandardFlags |= PEEP_ITEM_VOUCHER;
-            peep->voucher_type = VOUCHER_TYPE_PARK_ENTRY_HALF_PRICE;
+            peep->VoucherType = VOUCHER_TYPE_PARK_ENTRY_HALF_PRICE;
             break;
         case ADVERTISING_CAMPAIGN_FOOD_OR_DRINK_FREE:
             peep->ItemStandardFlags |= PEEP_ITEM_VOUCHER;
-            peep->voucher_type = VOUCHER_TYPE_FOOD_OR_DRINK_FREE;
-            peep->voucher_arguments = campaign->ShopItemType;
+            peep->VoucherType = VOUCHER_TYPE_FOOD_OR_DRINK_FREE;
+            peep->VoucherShopItem = campaign->ShopItemType;
             break;
         case ADVERTISING_CAMPAIGN_PARK:
             break;
         case ADVERTISING_CAMPAIGN_RIDE:
-            peep->guest_heading_to_ride_id = campaign->RideId;
-            peep->peep_is_lost_countdown = 240;
+            peep->GuestHeadingToRideId = campaign->RideId;
+            peep->GuestIsLostCountdown = 240;
             break;
     }
 }

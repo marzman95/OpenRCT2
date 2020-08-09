@@ -11,6 +11,8 @@
 
 #ifdef ENABLE_SCRIPTING
 
+#    include "../world/Map.h"
+
 #    include <cstdio>
 #    include <dukglue/dukglue.h>
 #    include <duktape.h>
@@ -183,6 +185,46 @@ namespace OpenRCT2::Scripting
         DukStackFrame(DukStackFrame&&) = delete;
     };
 
+    /**
+     * Bi-directional map for converting between strings and enums / numbers.
+     */
+    template<typename T> class DukEnumMap
+    {
+    private:
+        std::unordered_map<std::string_view, T> _s2n;
+        std::unordered_map<T, std::string_view> _n2s;
+
+    public:
+        DukEnumMap(const std::initializer_list<std::pair<std::string_view, T>>& items)
+        {
+            _s2n = std::unordered_map<std::string_view, T>(items.begin(), items.end());
+            for (const auto& kvp : items)
+            {
+                _n2s.emplace(std::get<1>(kvp), std::get<0>(kvp));
+            }
+        }
+
+        std::string_view operator[](T k) const
+        {
+            auto it = _n2s.find(k);
+            if (it == _n2s.end())
+            {
+                return "";
+            }
+            return it->second;
+        }
+
+        T operator[](const std::string_view& k) const
+        {
+            auto it = _s2n.find(k);
+            if (it == _s2n.end())
+            {
+                return static_cast<T>(0);
+            }
+            return it->second;
+        }
+    };
+
     inline duk_ret_t duk_json_decode_wrapper(duk_context* ctx, void*)
     {
         duk_json_decode(ctx, -1);
@@ -215,6 +257,12 @@ namespace OpenRCT2::Scripting
         return DukValue::take_from_stack(ctx);
     }
 
+    template<> inline DukValue ToDuk(duk_context* ctx, const int32_t& value)
+    {
+        duk_push_int(ctx, value);
+        return DukValue::take_from_stack(ctx);
+    }
+
     template<> inline DukValue ToDuk(duk_context* ctx, const std::string_view& value)
     {
         duk_push_lstring(ctx, value.data(), value.size());
@@ -227,9 +275,99 @@ namespace OpenRCT2::Scripting
         return DukValue::take_from_stack(ctx);
     }
 
-    template<typename T> DukValue ToDuk(duk_context* ctx, const std::optional<T>& value)
+    template<typename T> inline DukValue ToDuk(duk_context* ctx, const std::optional<T>& value)
     {
         return value ? ToDuk(ctx, *value) : ToDuk(ctx, nullptr);
+    }
+
+    template<> CoordsXY inline FromDuk(const DukValue& d)
+    {
+        CoordsXY result;
+        result.x = AsOrDefault(d["x"], 0);
+        result.y = AsOrDefault(d["y"], 0);
+        return result;
+    }
+
+    template<> DukValue inline ToDuk(duk_context* ctx, const CoordsXY& coords)
+    {
+        DukObject dukCoords(ctx);
+        dukCoords.Set("x", coords.x);
+        dukCoords.Set("y", coords.y);
+        return dukCoords.Take();
+    }
+
+    template<> DukValue inline ToDuk(duk_context* ctx, const ScreenCoordsXY& coords)
+    {
+        DukObject dukCoords(ctx);
+        dukCoords.Set("x", coords.x);
+        dukCoords.Set("y", coords.y);
+        return dukCoords.Take();
+    }
+
+    template<> inline DukValue ToDuk(duk_context* ctx, const CoordsXYZ& value)
+    {
+        if (value.isNull())
+        {
+            return ToDuk(ctx, nullptr);
+        }
+        else
+        {
+            DukObject dukCoords(ctx);
+            dukCoords.Set("x", value.x);
+            dukCoords.Set("y", value.y);
+            dukCoords.Set("z", value.z);
+            return dukCoords.Take();
+        }
+    }
+
+    template<> inline CoordsXYZ FromDuk(const DukValue& value)
+    {
+        CoordsXYZ result;
+        if (value.type() == DukValue::Type::OBJECT)
+        {
+            result.x = AsOrDefault(value["x"], 0);
+            result.y = AsOrDefault(value["y"], 0);
+            result.z = AsOrDefault(value["z"], 0);
+        }
+        else
+        {
+            result.setNull();
+        }
+        return result;
+    }
+
+    template<> inline DukValue ToDuk(duk_context* ctx, const CoordsXYZD& value)
+    {
+        if (value.isNull())
+        {
+            return ToDuk(ctx, nullptr);
+        }
+        else
+        {
+            DukObject dukCoords(ctx);
+            dukCoords.Set("x", value.x);
+            dukCoords.Set("y", value.y);
+            dukCoords.Set("z", value.z);
+            dukCoords.Set("direction", value.direction);
+            return dukCoords.Take();
+        }
+    }
+
+    template<> inline CoordsXYZD FromDuk(const DukValue& value)
+    {
+        CoordsXYZD result;
+        if (value.type() == DukValue::Type::OBJECT)
+        {
+            result.x = AsOrDefault(value["x"], 0);
+            result.y = AsOrDefault(value["y"], 0);
+            result.z = AsOrDefault(value["z"], 0);
+            result.direction = AsOrDefault(value["direction"], 0);
+        }
+        else
+        {
+            result.setNull();
+        }
+        return result;
     }
 
 } // namespace OpenRCT2::Scripting

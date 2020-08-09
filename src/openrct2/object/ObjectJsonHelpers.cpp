@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -414,7 +414,6 @@ namespace ObjectJsonHelpers
                 auto importResult = importer.Import(image, 0, 0, ImageImporter::IMPORT_FLAGS::RLE);
 
                 result.push_back(std::make_unique<RequiredImage>(importResult.Element));
-                std::free(importResult.Buffer);
             }
             catch (const std::exception& e)
             {
@@ -450,7 +449,6 @@ namespace ObjectJsonHelpers
             g1Element.x_offset = x;
             g1Element.y_offset = y;
             result.push_back(std::make_unique<RequiredImage>(g1Element));
-            std::free(importResult.Buffer);
         }
         catch (const std::exception& e)
         {

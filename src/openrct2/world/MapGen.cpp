@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -349,7 +349,7 @@ static void mapgen_place_trees()
 
         int32_t type = -1;
         auto* surfaceElement = map_get_surface_element_at(pos.ToCoordsXY());
-        if (surfaceElement != nullptr)
+        if (surfaceElement == nullptr)
             continue;
         switch (surfaceElement->GetSurfaceStyle())
         {

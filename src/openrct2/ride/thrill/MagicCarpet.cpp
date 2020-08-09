@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -61,7 +61,7 @@ static Vehicle* get_first_vehicle(Ride* ride)
         uint16_t vehicleSpriteIndex = ride->vehicles[0];
         if (vehicleSpriteIndex != SPRITE_INDEX_NULL)
         {
-            return GET_VEHICLE(vehicleSpriteIndex);
+            return GetEntity<Vehicle>(vehicleSpriteIndex);
         }
     }
     return nullptr;

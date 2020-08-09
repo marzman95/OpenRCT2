@@ -17,16 +17,16 @@
 #include "../world/Banner.h"
 #include "ObjectJsonHelpers.h"
 
-void WallObject::ReadLegacy(IReadObjectContext* context, IStream* stream)
+void WallObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
-    stream->Seek(6, STREAM_SEEK_CURRENT);
+    stream->Seek(6, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.wall.tool_id = stream->ReadValue<uint8_t>();
     _legacyType.wall.flags = stream->ReadValue<uint8_t>();
     _legacyType.wall.height = stream->ReadValue<uint8_t>();
     _legacyType.wall.flags2 = stream->ReadValue<uint8_t>();
     _legacyType.wall.price = stream->ReadValue<uint16_t>();
     _legacyType.wall.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
-    stream->Seek(1, STREAM_SEEK_CURRENT);
+    stream->Seek(1, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.wall.scrolling_mode = stream->ReadValue<uint8_t>();
 
     GetStringTable().Read(context, stream, OBJ_STRING_ID_NAME);
@@ -69,11 +69,10 @@ void WallObject::Unload()
 
 void WallObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
 {
-    int32_t x = width / 2;
-    int32_t y = height / 2;
+    auto screenCoords = ScreenCoordsXY{ width / 2, height / 2 };
 
-    x += 14;
-    y += (_legacyType.wall.height * 2) + 16;
+    screenCoords.x += 14;
+    screenCoords.y += (_legacyType.wall.height * 2) + 16;
 
     uint32_t imageId = 0x20D00000 | _legacyType.image;
     if (_legacyType.wall.flags & WALL_SCENERY_HAS_SECONDARY_COLOUR)
@@ -81,17 +80,17 @@ void WallObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t heig
         imageId |= 0x92000000;
     }
 
-    gfx_draw_sprite(dpi, imageId, x, y, 0);
+    gfx_draw_sprite(dpi, imageId, screenCoords, 0);
 
     if (_legacyType.wall.flags & WALL_SCENERY_HAS_GLASS)
     {
         imageId = _legacyType.image + 0x44500006;
-        gfx_draw_sprite(dpi, imageId, x, y, 0);
+        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
     }
     else if (_legacyType.wall.flags & WALL_SCENERY_IS_DOOR)
     {
         imageId++;
-        gfx_draw_sprite(dpi, imageId, x, y, 0);
+        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
     }
 }
 
@@ -142,6 +141,7 @@ void WallObject::ReadJson(IReadObjectContext* context, const json_t* root)
         if ((_legacyType.wall.flags & WALL_SCENERY_HAS_SECONDARY_COLOUR)
             || (_legacyType.wall.flags & WALL_SCENERY_HAS_TERNARY_COLOUR))
         {
+            _legacyType.wall.flags |= WALL_SCENERY_HAS_PRIMARY_COLOUR;
             _legacyType.wall.flags2 |= WALL_SCENERY_2_NO_SELECT_PRIMARY_COLOUR;
         }
     }

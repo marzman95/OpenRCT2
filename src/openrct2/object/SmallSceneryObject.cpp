@@ -23,15 +23,15 @@
 
 #include <algorithm>
 
-void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, IStream* stream)
+void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
-    stream->Seek(6, STREAM_SEEK_CURRENT);
+    stream->Seek(6, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.small_scenery.flags = stream->ReadValue<uint32_t>();
     _legacyType.small_scenery.height = stream->ReadValue<uint8_t>();
     _legacyType.small_scenery.tool_id = stream->ReadValue<uint8_t>();
     _legacyType.small_scenery.price = stream->ReadValue<int16_t>();
     _legacyType.small_scenery.removal_price = stream->ReadValue<int16_t>();
-    stream->Seek(4, STREAM_SEEK_CURRENT);
+    stream->Seek(4, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.small_scenery.animation_delay = stream->ReadValue<uint16_t>();
     _legacyType.small_scenery.animation_mask = stream->ReadValue<uint16_t>();
     _legacyType.small_scenery.num_frames = stream->ReadValue<uint16_t>();
@@ -107,17 +107,16 @@ void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int3
         }
     }
 
-    int32_t x = width / 2;
-    int32_t y = (height / 2) + (_legacyType.small_scenery.height / 2);
-    y = std::min(y, height - 16);
+    auto screenCoords = ScreenCoordsXY{ width / 2, (height / 2) + (_legacyType.small_scenery.height / 2) };
+    screenCoords.y = std::min(screenCoords.y, height - 16);
 
     if ((scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_FULL_TILE))
         && (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_VOFFSET_CENTRE)))
     {
-        y -= 12;
+        screenCoords.y -= 12;
     }
 
-    gfx_draw_sprite(dpi, imageId, x, y, 0);
+    gfx_draw_sprite(dpi, imageId, screenCoords, 0);
 
     if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_GLASS))
     {
@@ -126,7 +125,7 @@ void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int3
         {
             imageId |= 0x92000000;
         }
-        gfx_draw_sprite(dpi, imageId, x, y, 0);
+        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
     }
 
     if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_ANIMATED_FG))
@@ -136,11 +135,11 @@ void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int3
         {
             imageId |= 0x92000000;
         }
-        gfx_draw_sprite(dpi, imageId, x, y, 0);
+        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
     }
 }
 
-std::vector<uint8_t> SmallSceneryObject::ReadFrameOffsets(IStream* stream)
+std::vector<uint8_t> SmallSceneryObject::ReadFrameOffsets(OpenRCT2::IStream* stream)
 {
     uint8_t frameOffset;
     auto data = std::vector<uint8_t>();

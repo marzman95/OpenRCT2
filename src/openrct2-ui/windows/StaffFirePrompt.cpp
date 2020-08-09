@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -32,8 +32,8 @@ enum WINDOW_STAFF_FIRE_WIDGET_IDX {
 // 0x9AFB4C
 static rct_widget window_staff_fire_widgets[] = {
     WINDOW_SHIM_WHITE(WINDOW_TITLE, WW, WH),
-    { WWT_BUTTON,           0,  10,         94,         WH - 20,    WH - 9,     STR_YES,                STR_NONE },
-    { WWT_BUTTON,           0,  WW - 95,    WW - 11,    WH - 20,    WH - 9,     STR_SAVE_PROMPT_CANCEL, STR_NONE },
+    MakeWidget({     10, WH - 20}, {85, 14}, WWT_BUTTON, 0, STR_YES               ),
+    MakeWidget({WW - 95, WH - 20}, {85, 14}, WWT_BUTTON, 0, STR_SAVE_PROMPT_CANCEL),
     { WIDGETS_END }
 };
 
@@ -71,17 +71,17 @@ static rct_window_event_list window_staff_fire_events = {
     window_staff_fire_paint,
     nullptr
 };
-//clang-format on
-
+// clang-format on
 
 /** Based off of rct2: 0x6C0A77 */
 rct_window* window_staff_fire_prompt_open(Peep* peep)
 {
-    rct_window * w;
+    rct_window* w;
 
     // Check if the confirm window already exists.
     w = window_bring_to_front_by_number(WC_FIRE_PROMPT, peep->sprite_index);
-    if (w != nullptr) {
+    if (w != nullptr)
+    {
         return w;
     }
 
@@ -96,38 +96,38 @@ rct_window* window_staff_fire_prompt_open(Peep* peep)
     return w;
 }
 
-
 /**
-*
-*  rct2: 0x006C0B40
-*/
-static void window_staff_fire_mouseup(rct_window *w, rct_widgetindex widgetIndex)
+ *
+ *  rct2: 0x006C0B40
+ */
+static void window_staff_fire_mouseup(rct_window* w, rct_widgetindex widgetIndex)
 {
-    switch (widgetIndex){
-    case WIDX_YES:
+    switch (widgetIndex)
     {
-        auto staffFireAction = StaffFireAction(w->number);
-        GameActions::Execute(&staffFireAction);
-        break;
-    }
-    case WIDX_CANCEL:
-    case WIDX_CLOSE:
-        window_close(w);
+        case WIDX_YES:
+        {
+            auto staffFireAction = StaffFireAction(w->number);
+            GameActions::Execute(&staffFireAction);
+            break;
+        }
+        case WIDX_CANCEL:
+        case WIDX_CLOSE:
+            window_close(w);
     }
 }
 
 /**
-*
-*  rct2: 0x006C0AF2
-*/
-static void window_staff_fire_paint(rct_window *w, rct_drawpixelinfo *dpi)
+ *
+ *  rct2: 0x006C0AF2
+ */
+static void window_staff_fire_paint(rct_window* w, rct_drawpixelinfo* dpi)
 {
     window_draw_widgets(w, dpi);
 
-    Peep* peep = &get_sprite(w->number)->peep;
+    Peep* peep = GetEntity<Peep>(w->number);
+    auto ft = Formatter::Common();
+    peep->FormatNameTo(ft);
 
-    peep->FormatNameTo(gCommonFormatArgs);
-
-    ScreenCoordsXY stringCoords(w->windowPos.x + WW / 2,w->windowPos.y + (WH / 2) - 3);
+    ScreenCoordsXY stringCoords(w->windowPos.x + WW / 2, w->windowPos.y + (WH / 2) - 3);
     gfx_draw_string_centred_wrapped(dpi, gCommonFormatArgs, stringCoords, WW - 4, STR_FIRE_STAFF_ID, COLOUR_BLACK);
 }

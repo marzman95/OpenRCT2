@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -49,10 +49,10 @@ void DrawRain(rct_drawpixelinfo* dpi, IRainDrawer* rainDrawer)
             viewFlags = viewport->flags;
 
         // Get rain draw function and draw rain
-        uint32_t rainType = gClimateCurrent.RainLevel;
-        if (rainType != RAIN_LEVEL_NONE && !gTrackDesignSaveMode && !(viewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
+        RainLevel rainType = gClimateCurrent.Level;
+        if (rainType != RainLevel::None && !gTrackDesignSaveMode && !(viewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
         {
-            auto drawFunc = DrawRainFunctions[rainType];
+            auto drawFunc = DrawRainFunctions[static_cast<int8_t>(rainType)];
             auto uiContext = GetContext()->GetUiContext();
             uiContext->DrawRainAnimation(rainDrawer, dpi, drawFunc);
         }

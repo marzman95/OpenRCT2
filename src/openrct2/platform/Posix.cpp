@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -25,7 +25,7 @@
 #    include "../localisation/Date.h"
 #    include "../localisation/Language.h"
 #    include "../util/Util.h"
-#    include "platform.h"
+#    include "Platform2.h"
 
 #    include <libgen.h>
 #    include <locale.h>
@@ -71,38 +71,6 @@ void platform_get_time_utc(rct2_time* out_time)
     out_time->hour = timeinfo->tm_hour;
 }
 
-void platform_get_date_local(rct2_date* out_date)
-{
-    assert(out_date != nullptr);
-    time_t rawtime;
-    struct tm* timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    out_date->day = timeinfo->tm_mday;
-    out_date->month = timeinfo->tm_mon + 1;
-    out_date->year = timeinfo->tm_year + 1900;
-    out_date->day_of_week = timeinfo->tm_wday;
-}
-
-void platform_get_time_local(rct2_time* out_time)
-{
-    assert(out_time != nullptr);
-    time_t rawtime;
-    struct tm* timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    out_time->second = timeinfo->tm_sec;
-    out_time->minute = timeinfo->tm_min;
-    out_time->hour = timeinfo->tm_hour;
-}
-
-bool platform_file_exists(const utf8* path)
-{
-    bool exists = access(path, F_OK) != -1;
-    log_verbose("file '%s' exists = %i", path, exists);
-    return exists;
-}
-
 bool platform_directory_exists(const utf8* path)
 {
     struct stat dirinfo;
@@ -117,7 +85,7 @@ bool platform_original_game_data_exists(const utf8* path)
     safe_strcpy(checkPath, path, MAX_PATH);
     safe_strcat_path(checkPath, "Data", MAX_PATH);
     safe_strcat_path(checkPath, "g1.dat", MAX_PATH);
-    return platform_file_exists(checkPath);
+    return Platform::FileExists(checkPath);
 }
 
 // Implement our own version of getumask(), as it is documented being
@@ -385,7 +353,7 @@ time_t platform_file_get_modified_time(const utf8* path)
     return 100;
 }
 
-uint8_t platform_get_locale_temperature_format()
+TemperatureUnit platform_get_locale_temperature_format()
 {
 // LC_MEASUREMENT is GNU specific.
 #    ifdef LC_MEASUREMENT
@@ -399,10 +367,10 @@ uint8_t platform_get_locale_temperature_format()
         if (!fnmatch("*_US*", langstring, 0) || !fnmatch("*_BS*", langstring, 0) || !fnmatch("*_BZ*", langstring, 0)
             || !fnmatch("*_PW*", langstring, 0))
         {
-            return TEMPERATURE_FORMAT_F;
+            return TemperatureUnit::Fahrenheit;
         }
     }
-    return TEMPERATURE_FORMAT_C;
+    return TemperatureUnit::Celsius;
 }
 
 uint8_t platform_get_locale_date_format()

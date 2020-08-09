@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -22,6 +22,8 @@
 #include <cmath>
 
 #ifdef _WIN32
+    #pragma comment(lib, "Ws2_32.lib")
+
     // winsock2 must be included before windows.h
     #include <winsock2.h>
     #include <ws2tcpip.h>
@@ -109,11 +111,11 @@ public:
     {
         if (_address.sa_family == AF_INET)
         {
-            return ((sockaddr_in*)&_address)->sin_port;
+            return reinterpret_cast<const sockaddr_in*>(&_address)->sin_port;
         }
         else
         {
-            return ((sockaddr_in6*)&_address)->sin6_port;
+            return reinterpret_cast<const sockaddr_in6*>(&_address)->sin6_port;
         }
     }
 

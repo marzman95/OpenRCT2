@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -43,6 +43,7 @@ namespace fs = std::filesystem;
 #            define WIN32_LEAN_AND_MEAN
 #        endif
 #        define BITMAP WIN32_BITMAP
+#        define PATTERN WIN32_PATTERN
 #    endif
 #    include <filesystem.hpp>
 #    ifdef _WIN32
@@ -50,6 +51,7 @@ namespace fs = std::filesystem;
 #        undef CreateWindow
 #        undef GetMessage
 #        undef BITMAP
+#        undef PATTERN
 #    endif
 namespace fs = ghc::filesystem;
 #endif

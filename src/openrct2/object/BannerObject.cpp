@@ -17,14 +17,14 @@
 #include "ObjectJsonHelpers.h"
 #include "ObjectList.h"
 
-void BannerObject::ReadLegacy(IReadObjectContext* context, IStream* stream)
+void BannerObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
-    stream->Seek(6, STREAM_SEEK_CURRENT);
+    stream->Seek(6, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.banner.scrolling_mode = stream->ReadValue<uint8_t>();
     _legacyType.banner.flags = stream->ReadValue<uint8_t>();
     _legacyType.banner.price = stream->ReadValue<int16_t>();
     _legacyType.banner.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
-    stream->Seek(2, STREAM_SEEK_CURRENT);
+    stream->Seek(2, OpenRCT2::STREAM_SEEK_CURRENT);
 
     GetStringTable().Read(context, stream, OBJ_STRING_ID_NAME);
 
@@ -75,12 +75,11 @@ void BannerObject::Unload()
 
 void BannerObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
 {
-    int32_t x = width / 2;
-    int32_t y = height / 2;
+    auto screenCoords = ScreenCoordsXY{ width / 2, height / 2 };
 
     uint32_t imageId = 0x20D00000 | _legacyType.image;
-    gfx_draw_sprite(dpi, imageId + 0, x - 12, y + 8, 0);
-    gfx_draw_sprite(dpi, imageId + 1, x - 12, y + 8, 0);
+    gfx_draw_sprite(dpi, imageId + 0, screenCoords + ScreenCoordsXY{ -12, 8 }, 0);
+    gfx_draw_sprite(dpi, imageId + 1, screenCoords + ScreenCoordsXY{ -12, 8 }, 0);
 }
 
 void BannerObject::ReadJson(IReadObjectContext* context, const json_t* root)

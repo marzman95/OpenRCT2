@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -26,7 +26,7 @@ namespace OpenRCT2::Audio
         AudioSource_* _source = nullptr;
         SpeexResamplerState* _resampler = nullptr;
 
-        int32_t _group = MIXER_GROUP_SOUND;
+        MixerGroup _group = MixerGroup::Sound;
         double _rate = 0;
         uint64_t _offset = 0;
         int32_t _loop = 0;
@@ -80,12 +80,12 @@ namespace OpenRCT2::Audio
             _resampler = value;
         }
 
-        [[nodiscard]] int32_t GetGroup() const override
+        [[nodiscard]] MixerGroup GetGroup() const override
         {
             return _group;
         }
 
-        void SetGroup(int32_t group) override
+        void SetGroup(MixerGroup group) override
         {
             _group = group;
         }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -28,7 +28,7 @@ ImageTable::~ImageTable()
     }
 }
 
-void ImageTable::Read(IReadObjectContext* context, IStream* stream)
+void ImageTable::Read(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
     if (gOpenRCT2NoGraphics)
     {
@@ -64,7 +64,7 @@ void ImageTable::Read(IReadObjectContext* context, IStream* stream)
             rct_g1_element g1Element;
 
             uintptr_t imageDataOffset = static_cast<uintptr_t>(stream->ReadValue<uint32_t>());
-            g1Element.offset = (uint8_t*)(imageDataBase + imageDataOffset);
+            g1Element.offset = reinterpret_cast<uint8_t*>(imageDataBase + imageDataOffset);
 
             g1Element.width = stream->ReadValue<int16_t>();
             g1Element.height = stream->ReadValue<int16_t>();

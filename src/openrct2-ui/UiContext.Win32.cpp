@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -16,7 +16,11 @@
 #    endif // __MINGW32__
 
 // Windows.h needs to be included first
+// clang-format off
 #    include <windows.h>
+#    include <shellapi.h>
+#    include <commdlg.h>
+// clang-format on
 #    undef CreateWindow
 
 // Then the rest
@@ -95,6 +99,12 @@ namespace OpenRCT2::Ui
         {
             std::wstring pathW = String::ToWideChar(path);
             ShellExecuteW(NULL, L"open", pathW.c_str(), NULL, NULL, SW_SHOWNORMAL);
+        }
+
+        void OpenURL(const std::string& url) override
+        {
+            std::wstring urlW = String::ToWideChar(url);
+            ShellExecuteW(NULL, L"open", urlW.c_str(), NULL, NULL, SW_SHOWNORMAL);
         }
 
         std::string ShowFileDialog(SDL_Window* window, const FileDialogDesc& desc) override

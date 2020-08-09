@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -109,71 +109,32 @@ static_assert(sizeof(rct_ride_entry_vehicle) % 4 == 0, "Invalid struct size");
 static_assert(sizeof(rct_ride_entry_vehicle) % 8 == 0, "Invalid struct size");
 #endif
 
-enum VEHICLE_TYPE : uint8_t
-{
-    VEHICLE_TYPE_HEAD = 0,
-    VEHICLE_TYPE_TAIL = 1,
-};
-
-enum VEHICLE_STATUS
-{
-    VEHICLE_STATUS_MOVING_TO_END_OF_STATION,
-    VEHICLE_STATUS_WAITING_FOR_PASSENGERS,
-    VEHICLE_STATUS_WAITING_TO_DEPART,
-    VEHICLE_STATUS_DEPARTING,
-    VEHICLE_STATUS_TRAVELLING,
-    VEHICLE_STATUS_ARRIVING,
-    VEHICLE_STATUS_UNLOADING_PASSENGERS,
-    VEHICLE_STATUS_TRAVELLING_BOAT,
-    VEHICLE_STATUS_CRASHING,
-    VEHICLE_STATUS_CRASHED,
-    VEHICLE_STATUS_TRAVELLING_DODGEMS,
-    VEHICLE_STATUS_SWINGING,
-    VEHICLE_STATUS_ROTATING,
-    VEHICLE_STATUS_FERRIS_WHEEL_ROTATING,
-    VEHICLE_STATUS_SIMULATOR_OPERATING,
-    VEHICLE_STATUS_SHOWING_FILM,
-    VEHICLE_STATUS_SPACE_RINGS_OPERATING,
-    VEHICLE_STATUS_TOP_SPIN_OPERATING,
-    VEHICLE_STATUS_HAUNTED_HOUSE_OPERATING,
-    VEHICLE_STATUS_DOING_CIRCUS_SHOW,
-    VEHICLE_STATUS_CROOKED_HOUSE_OPERATING,
-    VEHICLE_STATUS_WAITING_FOR_CABLE_LIFT,
-    VEHICLE_STATUS_TRAVELLING_CABLE_LIFT,
-    VEHICLE_STATUS_STOPPING,
-    VEHICLE_STATUS_WAITING_FOR_PASSENGERS_17,
-    VEHICLE_STATUS_WAITING_TO_START,
-    VEHICLE_STATUS_STARTING,
-    VEHICLE_STATUS_OPERATING_1A,
-    VEHICLE_STATUS_STOPPING_1B,
-    VEHICLE_STATUS_UNLOADING_PASSENGERS_1C,
-    VEHICLE_STATUS_STOPPED_BY_BLOCK_BRAKES
-};
-
 struct rct_vehicle_sound_params;
 
-enum VEHICLE_TRACK_SUBPOSITION : uint8_t
+enum class VehicleTrackSubposition : uint8_t
 {
-    VEHICLE_TRACK_SUBPOSITION_0,
+    Default,
     // Going out means "moving away from the start". Viewed from Station 1, this is the left hand side of the track.
-    VEHICLE_TRACK_SUBPOSITION_CHAIRLIFT_GOING_OUT,
-    VEHICLE_TRACK_SUBPOSITION_CHAIRLIFT_GOING_BACK,
+    ChairliftGoingOut,
+    ChairliftGoingBack,
     // End and start bullwheel as viewed from Station 1.
-    VEHICLE_TRACK_SUBPOSITION_CHAIRLIFT_END_BULLWHEEL,
-    VEHICLE_TRACK_SUBPOSITION_CHAIRLIFT_START_BULLWHEEL,
-    VEHICLE_TRACK_SUBPOSITION_GO_KARTS_LEFT_LANE,
-    VEHICLE_TRACK_SUBPOSITION_GO_KARTS_RIGHT_LANE,
-    VEHICLE_TRACK_SUBPOSITION_GO_KARTS_MOVING_TO_RIGHT_LANE,
-    VEHICLE_TRACK_SUBPOSITION_GO_KARTS_MOVING_TO_LEFT_LANE,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_START_9 = 9,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_PATH_A_9 = 9,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_BALL_PATH_A_10,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_PATH_B_11,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_BALL_PATH_B_12,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_PATH_C_13,
-    VEHICLE_TRACK_SUBPOSITION_MINI_GOLF_BALL_PATH_C_14,
-    VEHICLE_TRACK_SUBPOSITION_REVERSER_RC_FRONT_BOGIE,
-    VEHICLE_TRACK_SUBPOSITION_REVERSER_RC_REAR_BOGIE,
+    ChairliftEndBullwheel,
+    ChairliftStartBullwheel,
+    GoKartsLeftLane,
+    GoKartsRightLane,
+    GoKartsMovingToRightLane,
+    GoKartsMovingToLeftLane,
+    MiniGolfStart9 = 9,
+    MiniGolfPathA9 = 9,
+    MiniGolfBallPathA10,
+    MiniGolfPathB11,
+    MiniGolfBallPathB12,
+    MiniGolfPathC13,
+    MiniGolfBallPathC14,
+    ReverserRCFrontBogie,
+    ReverserRCRearBogie,
+
+    Count,
 };
 
 struct Ride;
@@ -185,8 +146,60 @@ struct GForces
     int32_t LateralG{};
 };
 
+// Size: 0x09
+struct rct_vehicle_info
+{
+    int16_t x;                   // 0x00
+    int16_t y;                   // 0x02
+    int16_t z;                   // 0x04
+    uint8_t direction;           // 0x06
+    uint8_t vehicle_sprite_type; // 0x07
+    uint8_t bank_rotation;       // 0x08
+};
+
 struct Vehicle : SpriteBase
 {
+    enum class Type : uint8_t
+    {
+        Head,
+        Tail,
+    };
+
+    enum class Status
+    {
+        MovingToEndOfStation,
+        WaitingForPassengers,
+        WaitingToDepart,
+        Departing,
+        Travelling,
+        Arriving,
+        UnloadingPassengers,
+        TravellingBoat,
+        Crashing,
+        Crashed,
+        TravellingDodgems,
+        Swinging,
+        Rotating,
+        FerrisWheelRotating,
+        SimulatorOperating,
+        ShowingFilm,
+        SpaceRingsOperating,
+        TopSpinOperating,
+        HauntedHouseOperating,
+        DoingCircusShow,
+        CrookedHouseOperating,
+        WaitingForCableLift,
+        TravellingCableLift,
+        Stopping,
+        WaitingForPassengers17,
+        WaitingToStart,
+        Starting,
+        Operating1A,
+        Stopping1B,
+        UnloadingPassengers1C,
+        StoppedByBlockBrakes
+    };
+
     uint8_t vehicle_sprite_type;
     uint8_t bank_rotation;
     int32_t remaining_distance;
@@ -221,11 +234,11 @@ struct Vehicle : SpriteBase
     uint16_t var_44;
     uint16_t mass;
     uint16_t update_flags;
-    uint8_t swing_sprite;
+    uint8_t SwingSprite;
     StationIndex current_station;
     union
     {
-        int16_t swinging_car_var_0;
+        int16_t SwingPosition;
         int16_t current_time;
         struct
         {
@@ -235,10 +248,10 @@ struct Vehicle : SpriteBase
     };
     union
     {
-        int16_t var_4E;
+        int16_t SwingSpeed;
         int16_t crash_z;
     };
-    VEHICLE_STATUS status;
+    Status status;
     uint8_t sub_state;
     uint16_t peep[32];
     uint8_t peep_tshirt_colours[32];
@@ -277,7 +290,7 @@ struct Vehicle : SpriteBase
     uint16_t var_C8;
     uint16_t var_CA;
     SoundId scream_sound_id;
-    uint8_t TrackSubposition;
+    VehicleTrackSubposition TrackSubposition;
     union
     {
         uint8_t var_CE;
@@ -293,7 +306,7 @@ struct Vehicle : SpriteBase
     uint8_t var_D3;
     uint8_t mini_golf_current_animation;
     uint8_t mini_golf_flags;
-    uint8_t ride_subtype;
+    ObjectEntryIndex ride_subtype;
     uint8_t colours_extended;
     uint8_t seat_rotation;
     uint8_t target_seat_rotation;
@@ -301,35 +314,61 @@ struct Vehicle : SpriteBase
 
     constexpr bool IsHead() const
     {
-        return type == VEHICLE_TYPE_HEAD;
+        return type == static_cast<uint8_t>(Vehicle::Type::Head);
     }
     void Update();
     Vehicle* GetHead();
     const Vehicle* GetHead() const;
-    const Vehicle* GetCar(size_t carIndex) const;
+    Vehicle* GetCar(size_t carIndex) const;
     void Invalidate();
-    void SetState(VEHICLE_STATUS vehicleStatus, uint8_t subState = 0);
+    void SetState(Vehicle::Status vehicleStatus, uint8_t subState = 0);
     bool IsGhost() const;
     void UpdateSoundParams(std::vector<rct_vehicle_sound_params>& vehicleSoundParamsList) const;
     bool DodgemsCarWouldCollideAt(const CoordsXY& coords, uint16_t* spriteId) const;
     int32_t UpdateTrackMotion(int32_t* outStation);
+    int32_t CableLiftUpdateTrackMotion();
     GForces GetGForces() const;
     void SetMapToolbar() const;
     int32_t IsUsedInPairs() const;
+    rct_ride_entry* GetRideEntry() const;
     rct_ride_entry_vehicle* Entry() const;
+    Ride* GetRide() const;
     Vehicle* TrainHead() const;
     Vehicle* TrainTail() const;
+
+    uint16_t GetTrackType() const
+    {
+        return track_type >> 2;
+    }
+
+    bool HasUpdateFlag(uint32_t flag) const
+    {
+        return (update_flags & flag) != 0;
+    }
+    void ClearUpdateFlag(uint32_t flag)
+    {
+        update_flags &= ~flag;
+    }
+    void SetUpdateFlag(uint32_t flag)
+    {
+        update_flags |= flag;
+    }
 
 private:
     bool SoundCanPlay() const;
     uint16_t GetSoundPriority() const;
+    const rct_vehicle_info* GetMoveInfo() const;
+    uint16_t GetTrackProgress() const;
     rct_vehicle_sound_params CreateSoundParam(uint16_t priority) const;
     void CableLiftUpdate();
+    bool CableLiftUpdateTrackMotionForwards();
+    bool CableLiftUpdateTrackMotionBackwards();
     void CableLiftUpdateMovingToEndOfStation();
     void CableLiftUpdateWaitingToDepart();
     void CableLiftUpdateDeparting();
     void CableLiftUpdateTravelling();
     void CableLiftUpdateArriving();
+    void Sub6DBF3E();
     void UpdateMeasurements();
     void UpdateMovingToEndOfStation();
     void UpdateWaitingForPassengers();
@@ -362,6 +401,7 @@ private:
     void UpdateCrossings() const;
     void UpdateSound();
     SoundId UpdateScreamSound();
+    SoundId ProduceScreamSound(const int32_t totalNumPeeps);
     void UpdateCrashSetup();
     void UpdateCollisionSetup();
     int32_t UpdateMotionDodgems();
@@ -370,6 +410,8 @@ private:
     bool CurrentTowerElementIsTop();
     bool UpdateTrackMotionForwards(rct_ride_entry_vehicle* vehicleEntry, Ride* curRide, rct_ride_entry* rideEntry);
     bool UpdateTrackMotionBackwards(rct_ride_entry_vehicle* vehicleEntry, Ride* curRide, rct_ride_entry* rideEntry);
+    int32_t UpdateTrackMotionPoweredRideAcceleration(
+        rct_ride_entry_vehicle* vehicleEntry, uint32_t totalMass, const int32_t curAcceleration);
     int32_t NumPeepsUntilTrainTail() const;
     void InvalidateWindow();
     void TestReset();
@@ -381,31 +423,35 @@ private:
     void UpdateHandleWaterSplash() const;
     void Claxon() const;
     void UpdateTrackMotionUpStopCheck() const;
+    void ApplyNonStopBlockBrake();
+    void ApplyStopBlockBrake();
     void CheckAndApplyBlockSectionStopSite();
     void UpdateVelocity();
+    void UpdateSpinningCar();
+    void UpdateSwingingCar();
+    int32_t GetSwingAmount() const;
     bool OpenRestraints();
     bool CloseRestraints();
     void CrashOnWater();
     void CrashOnLand();
     void SimulateCrash() const;
+    void KillAllPassengersInTrain();
+    void KillPassengers(Ride* curRide);
     void TrainReadyToDepart(uint8_t num_peeps_on_train, uint8_t num_used_seats);
+    int32_t UpdateTrackMotionMiniGolf(int32_t* outStation);
+    void UpdateTrackMotionMiniGolfVehicle(Ride* curRide, rct_ride_entry* rideEntry, rct_ride_entry_vehicle* vehicleEntry);
+    bool UpdateTrackMotionForwardsGetNewTrack(uint16_t trackType, Ride* curRide, rct_ride_entry* rideEntry);
+    bool UpdateTrackMotionBackwardsGetNewTrack(uint16_t trackType, Ride* curRide, uint16_t* progress);
+    bool UpdateMotionCollisionDetection(const CoordsXYZ& loc, uint16_t* otherVehicleIndex);
+    void UpdateGoKartAttemptSwitchLanes();
+    void UpdateSceneryDoor() const;
+    void UpdateSceneryDoorBackwards() const;
 };
 
 struct train_ref
 {
     Vehicle* head;
     Vehicle* tail;
-};
-
-// Size: 0x09
-struct rct_vehicle_info
-{
-    int16_t x;                   // 0x00
-    int16_t y;                   // 0x02
-    int16_t z;                   // 0x04
-    uint8_t direction;           // 0x06
-    uint8_t vehicle_sprite_type; // 0x07
-    uint8_t bank_rotation;       // 0x08
 };
 
 enum : uint32_t
@@ -480,7 +526,7 @@ enum : uint32_t
     VEHICLE_UPDATE_FLAG_ZERO_VELOCITY = (1 << 7), // Used on rides when safety cutout stops them on a lift
     VEHICLE_UPDATE_FLAG_BROKEN_CAR = (1 << 8),
     VEHICLE_UPDATE_FLAG_BROKEN_TRAIN = (1 << 9),
-    VEHICLE_UPDATE_FLAG_ON_BREAK_FOR_DROP = (1 << 10),
+    VEHICLE_UPDATE_FLAG_ON_BRAKE_FOR_DROP = (1 << 10),
     VEHICLE_UPDATE_FLAG_USE_INVERTED_SPRITES = (1 << 11), // Used on rides where trains can run for extended periods of time,
                                                           // i.e. the Flying, Lay-down and Multi-dimension RCs.
     VEHICLE_UPDATE_FLAG_12 = (1 << 12),
@@ -578,8 +624,6 @@ enum
 Vehicle* try_get_vehicle(uint16_t spriteIndex);
 void vehicle_update_all();
 void vehicle_sounds_update();
-const rct_vehicle_info* vehicle_get_move_info(int32_t trackSubposition, int32_t typeAndDirection, int32_t offset);
-uint16_t vehicle_get_move_info_size(int32_t trackSubposition, int32_t typeAndDirection);
 
 extern Vehicle* gCurrentVehicle;
 extern StationIndex _vehicleStationIndex;
@@ -587,13 +631,8 @@ extern uint32_t _vehicleMotionTrackFlags;
 extern int32_t _vehicleVelocityF64E08;
 extern int32_t _vehicleVelocityF64E0C;
 extern int32_t _vehicleUnkF64E10;
-extern uint8_t _vehicleVAngleEndF64E36;
-extern uint8_t _vehicleBankEndF64E37;
 extern uint8_t _vehicleF64E2C;
 extern Vehicle* _vehicleFrontVehicle;
 extern CoordsXYZ unk_F64E20;
-
-/** Helper macro until rides are stored in this module. */
-#define GET_VEHICLE(sprite_index) &(get_sprite(sprite_index)->vehicle)
 
 #endif

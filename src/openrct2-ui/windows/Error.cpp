@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -23,7 +23,7 @@ enum {
 };
 
 static rct_widget window_error_widgets[] = {
-    { WWT_IMGBTN, 0, 0, 199, 0, 41, 0xFFFFFFFF, STR_NONE },
+    MakeWidget({0, 0}, {200, 42}, WWT_IMGBTN, 0),
     { WIDGETS_END }
 };
 
@@ -194,5 +194,5 @@ static void window_error_paint(rct_window* w, rct_drawpixelinfo* dpi)
 
     l = w->windowPos.x + (w->width + 1) / 2 - 1;
     t = w->windowPos.y + 1;
-    draw_string_centred_raw(dpi, l, t, _window_error_num_lines, _window_error_text.data());
+    draw_string_centred_raw(dpi, { l, t }, _window_error_num_lines, _window_error_text.data());
 }

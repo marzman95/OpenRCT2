@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -17,6 +17,7 @@
 #include "../RideData.h"
 #include "../TrackData.h"
 #include "../TrackPaint.h"
+#include "../Vehicle.h"
 #include "../VehiclePaint.h"
 
 #include <iterator>
@@ -1208,7 +1209,7 @@ void vehicle_visual_mini_golf_player(
         return;
     }
 
-    auto ride = get_ride(vehicle->ride);
+    auto ride = vehicle->GetRide();
     if (ride == nullptr)
         return;
 
@@ -1216,13 +1217,15 @@ void vehicle_visual_mini_golf_player(
     if (rideEntry == nullptr)
         return;
 
-    rct_sprite* sprite = get_sprite(vehicle->peep[0]);
+    auto* peep = GetEntity<Peep>(vehicle->peep[0]);
+    if (peep == nullptr)
+        return;
 
     uint8_t frame = mini_golf_peep_animation_frames[vehicle->mini_golf_current_animation][vehicle->animation_frame];
     uint32_t ebx = (frame << 2) + (imageDirection >> 3);
 
     uint32_t image_id = rideEntry->vehicles[0].base_image_id + 1 + ebx;
-    uint32_t peep_palette = sprite->peep.tshirt_colour << 19 | sprite->peep.trousers_colour << 24 | 0x0A0000000;
+    uint32_t peep_palette = peep->TshirtColour << 19 | peep->TrousersColour << 24 | 0x0A0000000;
     sub_98197C(session, image_id | peep_palette, 0, 0, 1, 1, 11, z, 0, 0, z + 5);
 }
 
@@ -1248,7 +1251,7 @@ void vehicle_visual_mini_golf_ball(
         return;
     }
 
-    auto ride = get_ride(vehicle->ride);
+    auto ride = vehicle->GetRide();
     if (ride == nullptr)
         return;
 

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -150,7 +150,7 @@ static paint_struct* sub_9819_c(
     ps->var_29 = 0;
     ps->map_x = session->MapPosition.x;
     ps->map_y = session->MapPosition.y;
-    ps->tileElement = (TileElement*)session->CurrentlyDrawnItem;
+    ps->tileElement = reinterpret_cast<TileElement*>(const_cast<void*>(session->CurrentlyDrawnItem));
 
     return ps;
 }
@@ -522,17 +522,16 @@ static void paint_attached_ps(rct_drawpixelinfo* dpi, paint_struct* ps, uint32_t
     attached_paint_struct* attached_ps = ps->attached_ps;
     for (; attached_ps; attached_ps = attached_ps->next)
     {
-        int16_t x = attached_ps->x + ps->x;
-        int16_t y = attached_ps->y + ps->y;
+        auto screenCoords = ScreenCoordsXY{ attached_ps->x + ps->x, attached_ps->y + ps->y };
 
         uint32_t imageId = paint_ps_colourify_image(attached_ps->image_id, ps->sprite_type, viewFlags);
         if (attached_ps->flags & PAINT_STRUCT_FLAG_IS_MASKED)
         {
-            gfx_draw_sprite_raw_masked(dpi, x, y, imageId, attached_ps->colour_image_id);
+            gfx_draw_sprite_raw_masked(dpi, screenCoords, imageId, attached_ps->colour_image_id);
         }
         else
         {
-            gfx_draw_sprite(dpi, imageId, x, y, ps->tertiary_colour);
+            gfx_draw_sprite(dpi, imageId, screenCoords, ps->tertiary_colour);
         }
     }
 }
@@ -599,44 +598,38 @@ static void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo* dpi, paint_str
     const auto screenCoordBackBottom = translate_3d_to_2d_with_z(rotation, backBottom);
 
     // bottom square
-    gfx_draw_line(
-        dpi, screenCoordFrontBottom.x, screenCoordFrontBottom.y, screenCoordLeftBottom.x, screenCoordLeftBottom.y, colour);
-    gfx_draw_line(
-        dpi, screenCoordBackBottom.x, screenCoordBackBottom.y, screenCoordLeftBottom.x, screenCoordLeftBottom.y, colour);
-    gfx_draw_line(
-        dpi, screenCoordBackBottom.x, screenCoordBackBottom.y, screenCoordRightBottom.x, screenCoordRightBottom.y, colour);
-    gfx_draw_line(
-        dpi, screenCoordFrontBottom.x, screenCoordFrontBottom.y, screenCoordRightBottom.x, screenCoordRightBottom.y, colour);
+    gfx_draw_line(dpi, { screenCoordFrontBottom, screenCoordLeftBottom }, colour);
+    gfx_draw_line(dpi, { screenCoordBackBottom, screenCoordLeftBottom }, colour);
+    gfx_draw_line(dpi, { screenCoordBackBottom, screenCoordRightBottom }, colour);
+    gfx_draw_line(dpi, { screenCoordFrontBottom, screenCoordRightBottom }, colour);
 
     // vertical back + sides
-    gfx_draw_line(dpi, screenCoordBackTop.x, screenCoordBackTop.y, screenCoordBackBottom.x, screenCoordBackBottom.y, colour);
-    gfx_draw_line(dpi, screenCoordLeftTop.x, screenCoordLeftTop.y, screenCoordLeftBottom.x, screenCoordLeftBottom.y, colour);
-    gfx_draw_line(
-        dpi, screenCoordRightTop.x, screenCoordRightTop.y, screenCoordRightBottom.x, screenCoordRightBottom.y, colour);
+    gfx_draw_line(dpi, { screenCoordBackTop, screenCoordBackBottom }, colour);
+    gfx_draw_line(dpi, { screenCoordLeftTop, screenCoordLeftBottom }, colour);
+    gfx_draw_line(dpi, { screenCoordRightTop, screenCoordRightBottom }, colour);
 
     // top square back
-    gfx_draw_line(dpi, screenCoordBackTop.x, screenCoordBackTop.y, screenCoordLeftTop.x, screenCoordLeftTop.y, colour);
-    gfx_draw_line(dpi, screenCoordBackTop.x, screenCoordBackTop.y, screenCoordRightTop.x, screenCoordRightTop.y, colour);
+    gfx_draw_line(dpi, { screenCoordBackTop, screenCoordLeftTop }, colour);
+    gfx_draw_line(dpi, { screenCoordBackTop, screenCoordRightTop }, colour);
 
     paint_ps_image(dpi, ps, imageId, x, y);
 
     // vertical front
-    gfx_draw_line(
-        dpi, screenCoordFrontTop.x, screenCoordFrontTop.y, screenCoordFrontBottom.x, screenCoordFrontBottom.y, colour);
+    gfx_draw_line(dpi, { screenCoordFrontTop, screenCoordFrontBottom }, colour);
 
     // top square
-    gfx_draw_line(dpi, screenCoordFrontTop.x, screenCoordFrontTop.y, screenCoordLeftTop.x, screenCoordLeftTop.y, colour);
-    gfx_draw_line(dpi, screenCoordFrontTop.x, screenCoordFrontTop.y, screenCoordRightTop.x, screenCoordRightTop.y, colour);
+    gfx_draw_line(dpi, { screenCoordFrontTop, screenCoordLeftTop }, colour);
+    gfx_draw_line(dpi, { screenCoordFrontTop, screenCoordRightTop }, colour);
 }
 
 static void paint_ps_image(rct_drawpixelinfo* dpi, paint_struct* ps, uint32_t imageId, int16_t x, int16_t y)
 {
     if (ps->flags & PAINT_STRUCT_FLAG_IS_MASKED)
     {
-        return gfx_draw_sprite_raw_masked(dpi, x, y, imageId, ps->colour_image_id);
+        return gfx_draw_sprite_raw_masked(dpi, { x, y }, imageId, ps->colour_image_id);
     }
 
-    gfx_draw_sprite(dpi, imageId, x, y, ps->tertiary_colour);
+    gfx_draw_sprite(dpi, imageId, { x, y }, ps->tertiary_colour);
 }
 
 static uint32_t paint_ps_colourify_image(uint32_t imageId, uint8_t spriteType, uint32_t viewFlags)
@@ -817,7 +810,7 @@ paint_struct* sub_98196C(
     ps->var_29 = 0;
     ps->map_x = session->MapPosition.x;
     ps->map_y = session->MapPosition.y;
-    ps->tileElement = (TileElement*)session->CurrentlyDrawnItem;
+    ps->tileElement = reinterpret_cast<TileElement*>(const_cast<void*>(session->CurrentlyDrawnItem));
 
     session->LastRootPS = ps;
 
@@ -1001,7 +994,7 @@ paint_struct* sub_98199C(
  * @param y (cx)
  * @return (!CF) success
  */
-bool paint_attach_to_previous_attach(paint_session* session, uint32_t image_id, uint16_t x, uint16_t y)
+bool paint_attach_to_previous_attach(paint_session* session, uint32_t image_id, int16_t x, int16_t y)
 {
     if (session->UnkF1AD2C == nullptr)
     {
@@ -1038,7 +1031,7 @@ bool paint_attach_to_previous_attach(paint_session* session, uint32_t image_id, 
  * @param y (cx)
  * @return (!CF) success
  */
-bool paint_attach_to_previous_ps(paint_session* session, uint32_t image_id, uint16_t x, uint16_t y)
+bool paint_attach_to_previous_ps(paint_session* session, uint32_t image_id, int16_t x, int16_t y)
 {
     if (session->NextFreePaintStruct >= session->EndOfPaintStructArray)
     {
@@ -1153,6 +1146,6 @@ void paint_draw_money_structs(rct_drawpixelinfo* dpi, paint_string_struct* ps)
         }
 
         gfx_draw_string_with_y_offsets(
-            &dpi2, buffer, COLOUR_BLACK, ps->x, ps->y, reinterpret_cast<int8_t*>(ps->y_offsets), forceSpriteFont);
+            &dpi2, buffer, COLOUR_BLACK, { ps->x, ps->y }, reinterpret_cast<int8_t*>(ps->y_offsets), forceSpriteFont);
     } while ((ps = ps->next) != nullptr);
 }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -18,6 +18,8 @@
 #include "../network/network.h"
 #include "../platform/platform.h"
 #include "../scenario/Scenario.h"
+#include "../scripting/Duktape.hpp"
+#include "../scripting/HookEngine.h"
 #include "../scripting/ScriptEngine.h"
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
@@ -552,5 +554,38 @@ namespace GameActions
     {
         return ExecuteInternal(action, false);
     }
-
 } // namespace GameActions
+
+bool GameAction::LocationValid(const CoordsXY& coords) const
+{
+    auto result = map_is_location_valid(coords);
+    if (!result)
+        return false;
+#ifdef ENABLE_SCRIPTING
+    auto& hookEngine = GetContext()->GetScriptEngine().GetHookEngine();
+    if (hookEngine.HasSubscriptions(OpenRCT2::Scripting::HOOK_TYPE::ACTION_LOCATION))
+    {
+        auto ctx = GetContext()->GetScriptEngine().GetContext();
+
+        // Create event args object
+        auto obj = OpenRCT2::Scripting::DukObject(ctx);
+        obj.Set("x", coords.x);
+        obj.Set("y", coords.y);
+        obj.Set("player", _playerId);
+        obj.Set("type", _type);
+
+        auto flags = GetActionFlags();
+        obj.Set("isClientOnly", (flags & GA_FLAGS::CLIENT_ONLY) != 0);
+        obj.Set("result", true);
+
+        // Call the subscriptions
+        auto e = obj.Take();
+        hookEngine.Call(OpenRCT2::Scripting::HOOK_TYPE::ACTION_LOCATION, e, true);
+
+        auto scriptResult = OpenRCT2::Scripting::AsOrDefault(e["result"], true);
+
+        return scriptResult;
+    }
+#endif
+    return true;
+}

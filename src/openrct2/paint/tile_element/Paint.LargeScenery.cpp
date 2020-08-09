@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -103,7 +103,7 @@ static void large_scenery_sign_fit_text(const utf8* str, rct_large_scenery_text*
     safe_strcpy(fitStr, str, bufLen);
     int32_t w = 0;
     uint32_t codepoint;
-    while (w <= text->max_width && (codepoint = utf8_get_next(fitStrEnd, (const utf8**)&fitStrEnd)) != 0)
+    while (w <= text->max_width && (codepoint = utf8_get_next(fitStrEnd, const_cast<const utf8**>(&fitStrEnd))) != 0)
     {
         if (height)
         {
@@ -356,7 +356,7 @@ void large_scenery_paint(paint_session* session, uint8_t direction, uint16_t hei
                             utf8* spacesrc = nullptr;
                             utf8* spacedst = nullptr;
                             int32_t w = 0;
-                            uint32_t codepoint = utf8_get_next(src, (const utf8**)&src);
+                            uint32_t codepoint = utf8_get_next(src, const_cast<const utf8**>(&src));
                             do
                             {
                                 w += large_scenery_sign_get_glyph(text, codepoint)->width;
@@ -367,7 +367,7 @@ void large_scenery_paint(paint_session* session, uint8_t direction, uint16_t hei
                                 }
                             } while (w <= text->max_width && (dst = utf8_write_codepoint(dst, codepoint)) != nullptr
                                      && (srcold = src) != nullptr
-                                     && (codepoint = utf8_get_next(src, (const utf8**)&src)) != '\0');
+                                     && (codepoint = utf8_get_next(src, const_cast<const utf8**>(&src))) != '\0');
                             src = srcold;
                             if (spacesrc && codepoint)
                             {
@@ -446,7 +446,7 @@ void large_scenery_paint(paint_session* session, uint8_t direction, uint16_t hei
         uint16_t stringWidth = gfx_get_string_width(signString);
         uint16_t scroll = stringWidth > 0 ? (gCurrentTicks / 2) % stringWidth : 0;
         sub_98199C(
-            session, scrolling_text_setup(session, STR_SCROLLING_SIGN_TEXT, scroll, scrollMode, textColour), 0, 0, 1, 1, 21,
+            session, scrolling_text_setup(session, STR_SCROLLING_SIGN_TEXT, ft, scroll, scrollMode, textColour), 0, 0, 1, 1, 21,
             height + 25, boxoffset.x, boxoffset.y, boxoffset.z);
     }
 

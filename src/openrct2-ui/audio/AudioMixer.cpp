@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -219,8 +219,8 @@ namespace OpenRCT2::Audio
             while (it != _channels.end())
             {
                 auto channel = *it;
-                int32_t group = channel->GetGroup();
-                if ((group != MIXER_GROUP_SOUND || gConfigSound.sound_enabled) && gConfigSound.master_sound_enabled
+                MixerGroup group = channel->GetGroup();
+                if ((group != MixerGroup::Sound || gConfigSound.sound_enabled) && gConfigSound.master_sound_enabled
                     && gConfigSound.master_volume != 0)
                 {
                     MixChannel(channel, dst, length);
@@ -386,7 +386,7 @@ namespace OpenRCT2::Audio
 
             switch (channel->GetGroup())
             {
-                case MIXER_GROUP_SOUND:
+                case MixerGroup::Sound:
                     volumeAdjust *= _adjustSoundVolume;
 
                     // Cap sound volume on title screen so music is more audible
@@ -395,7 +395,8 @@ namespace OpenRCT2::Audio
                         volumeAdjust = std::min(volumeAdjust, 0.75f);
                     }
                     break;
-                case MIXER_GROUP_RIDE_MUSIC:
+                case MixerGroup::RideMusic:
+                case MixerGroup::TitleMusic:
                     volumeAdjust *= _adjustMusicVolume;
                     break;
             }

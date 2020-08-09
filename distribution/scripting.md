@@ -2,7 +2,13 @@
 
 OpenRCT2 allows custom scripts (also known as plug-ins) to be written and executed in the game providing additional behaviour on top of the vanilla experience. This can range from extra windows providing information about the park to entire new multiplayer game modes.
 
-Each script is a single physical javascript file within the `plugin` directory in your OpenRCT2 user directory. This is usually `C:\Users\YourName\Documents\OpenRCT2` on Windows, or `$XDG_CONFIG_HOME/OpenRCT2` or in its absence `$HOME/.config/OpenRCT2` on Linux. OpenRCT2 will load every single file with the extension `.js` in this directory recursively. So if you want to prevent a plug-in from being used, you must move it outside this directory, or rename it so the filename does not end with `.js`.
+Each script is a single physical javascript file within the `plugin` directory in your OpenRCT2 user directory. The user directory for each platform is usually:
+
+- Windows: `C:\Users\YourName\Documents\OpenRCT2`
+- Mac: `/Users/YourName/Library/Application Support/OpenRCT2`
+- Linux: `$XDG_CONFIG_HOME/OpenRCT2` or in its absence `$HOME/.config/OpenRCT2`
+
+OpenRCT2 will load every single file with the extension `.js` in this directory recursively. So if you want to prevent a plug-in from being used, you must move it outside this directory, or rename it so the filename does not end with `.js`.
 
 There are two types of scripts:
 * Local
@@ -11,6 +17,8 @@ There are two types of scripts:
 Local scripts can **not** alter the game state. This allows each player to enable any local script for their own game without other players needing to also enable the same script. These scripts tend to provide extra tools for productivity, or new windows containing information.
 
 Remote scripts on the other hand can alter the game state in certain contexts, thus must be enabled for every player in a multiplayer game. Players **cannot** enable or disable remote scripts for multiplayer servers they join. Instead the server will upload any remote scripts that have been enabled on the server to each player. This allows servers to enable scripts without players needing to manually download or enable the same script on their end.
+
+The authors must also define a licence for the plug-in, making it clear to the community whether that plug-in can be altered, copied, etc. A good reference material is listed on [ChooseALlicense](https://choosealicense.com/appendix/), try to pick one of them and use its corresponding identifier, as listed on [SPDX](https://spdx.org/licenses/).
 
 ## Writing Scripts
 
@@ -32,6 +40,7 @@ registerPlugin({
     version: '1.0',
     authors: ['Your Name'],
     type: 'remote',
+    licence: 'MIT',
     main: main
 });
 ```

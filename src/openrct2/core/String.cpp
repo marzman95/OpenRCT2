@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -24,10 +24,6 @@
 #endif
 
 #ifdef _WIN32
-#    ifndef NOMINMAX
-#        define NOMINMAX
-#    endif
-#    define WIN32_LEAN_AND_MEAN
 #    include <windows.h>
 #endif
 
@@ -454,7 +450,7 @@ namespace String
 
     utf8* SkipBOM(utf8* buffer)
     {
-        return const_cast<utf8*>(SkipBOM((const utf8*)buffer));
+        return const_cast<utf8*>(SkipBOM(static_cast<const utf8*>(buffer)));
     }
 
     const utf8* SkipBOM(const utf8* buffer)
@@ -474,7 +470,7 @@ namespace String
 
     codepoint_t GetNextCodepoint(utf8* ptr, utf8** nextPtr)
     {
-        return GetNextCodepoint((const utf8*)ptr, (const utf8**)nextPtr);
+        return GetNextCodepoint(static_cast<const utf8*>(ptr), const_cast<const utf8**>(nextPtr));
     }
 
     codepoint_t GetNextCodepoint(const utf8* ptr, const utf8** nextPtr)

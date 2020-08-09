@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -165,9 +165,6 @@ using rct_string_id = uint16_t;
         (x) = nullptr;                                                                                                         \
     } while (false)
 
-#ifndef interface
-#    define interface struct
-#endif
 #define abstract = 0
 
 #if defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))

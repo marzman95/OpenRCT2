@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -34,8 +34,8 @@ enum WINDOW_SHORTCUT_WIDGET_IDX {
 // 0x9DE48C
 static rct_widget window_shortcut_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-    { WWT_SCROLL,           0,  4,      WW - 5, 18,     WH - 18,    SCROLL_VERTICAL,            STR_SHORTCUT_LIST_TIP },
-    { WWT_BUTTON,           0,  4,      153,    WH-15,  WH - 4,     STR_SHORTCUT_ACTION_RESET,  STR_SHORTCUT_ACTION_RESET_TIP },
+    MakeWidget({4,    18}, {412, 245}, WWT_SCROLL, 0, SCROLL_VERTICAL,           STR_SHORTCUT_LIST_TIP        ),
+    MakeWidget({4, WH-15}, {150,  12}, WWT_BUTTON, 0, STR_SHORTCUT_ACTION_RESET, STR_SHORTCUT_ACTION_RESET_TIP),
     { WIDGETS_END }
 };
 
@@ -102,7 +102,11 @@ static const ShortcutStringPair ShortcutList[] =
     { SHORTCUT_SHOW_OPTIONS,                          STR_SHORTCUT_SHOW_OPTIONS },
     { SHORTCUT_SCREENSHOT,                            STR_SHORTCUT_SCREENSHOT },
     { SHORTCUT_MUTE_SOUND,                            STR_SHORTCUT_MUTE_SOUND },
+
+    { SHORTCUT_UNDEFINED,                             STR_NONE },
+
     { SHORTCUT_OPEN_CHEAT_WINDOW,                     STR_SHORTCUT_OPEN_CHEATS_WINDOW },
+    { SHORTCUT_TOGGLE_CLEARANCE_CHECKS,               STR_SHORTCUT_TOGGLE_CLEARANCE_CHECKS },
 
     { SHORTCUT_UNDEFINED,                             STR_NONE },
 
@@ -326,7 +330,9 @@ static void window_shortcut_scrollmouseover(rct_window* w, int32_t scrollIndex, 
  */
 static void window_shortcut_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
 {
-    gfx_fill_rect(dpi, dpi->x, dpi->y, dpi->x + dpi->width - 1, dpi->y + dpi->height - 1, ColourMapA[w->colours[1]].mid_light);
+    auto dpiCoords = ScreenCoordsXY{ dpi->x, dpi->y };
+    gfx_fill_rect(
+        dpi, { dpiCoords, dpiCoords + ScreenCoordsXY{ dpi->width - 1, dpi->height - 1 } }, ColourMapA[w->colours[1]].mid_light);
 
     // TODO: the line below is a workaround for what is presumably a bug with dpi->width
     //       see https://github.com/OpenRCT2/OpenRCT2/issues/11238 for details
@@ -349,8 +355,8 @@ static void window_shortcut_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
         if (ShortcutList[i].ShortcutId == SHORTCUT_UNDEFINED)
         {
             const int32_t top = y + (SCROLLABLE_ROW_HEIGHT / 2) - 1;
-            gfx_fill_rect(dpi, 0, top, scrollWidth, top, ColourMapA[w->colours[0]].mid_dark);
-            gfx_fill_rect(dpi, 0, top + 1, scrollWidth, top + 1, ColourMapA[w->colours[0]].lightest);
+            gfx_fill_rect(dpi, { { 0, top }, { scrollWidth, top } }, ColourMapA[w->colours[0]].mid_dark);
+            gfx_fill_rect(dpi, { { 0, top + 1 }, { scrollWidth, top + 1 } }, ColourMapA[w->colours[0]].lightest);
             continue;
         }
 
@@ -365,7 +371,7 @@ static void window_shortcut_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
         auto ft = Formatter::Common();
         ft.Add<rct_string_id>(STR_SHORTCUT_ENTRY_FORMAT);
         ft.Add<rct_string_id>(ShortcutList[i].StringId);
-        gfx_draw_string_left_clipped(dpi, format, gCommonFormatArgs, COLOUR_BLACK, 0, y - 1, bindingOffset);
+        gfx_draw_string_left_clipped(dpi, format, gCommonFormatArgs, COLOUR_BLACK, { 0, y - 1 }, bindingOffset);
 
         char keybinding[128];
         keyboard_shortcuts_format_string(keybinding, 128, ShortcutList[i].ShortcutId);
@@ -376,7 +382,7 @@ static void window_shortcut_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
             ft = Formatter::Common();
             ft.Add<rct_string_id>(STR_STRING);
             ft.Add<char*>(keybinding);
-            gfx_draw_string_left_clipped(dpi, format, gCommonFormatArgs, COLOUR_BLACK, bindingOffset, y - 1, maxWidth);
+            gfx_draw_string_left_clipped(dpi, format, gCommonFormatArgs, COLOUR_BLACK, { bindingOffset, y - 1 }, maxWidth);
         }
     }
 }

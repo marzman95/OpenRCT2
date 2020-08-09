@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -418,11 +418,11 @@ void fence_paint(paint_session* session, uint8_t direction, int32_t height, cons
     }
     if (direction == 0)
     {
-        secondaryColour = ColourMapA[secondaryColour].light;
+        secondaryColour = ColourMapA[secondaryColour].mid_dark;
     }
     else
     {
-        secondaryColour = ColourMapA[secondaryColour].mid_dark;
+        secondaryColour = ColourMapA[secondaryColour].light;
     }
 
     uint16_t scrollingMode = sceneryEntry->wall.scrolling_mode + ((direction + 1) & 0x3);
@@ -434,7 +434,8 @@ void fence_paint(paint_session* session, uint8_t direction, int32_t height, cons
     auto banner = tile_element->AsWall()->GetBanner();
     if (banner != nullptr && !banner->IsNull())
     {
-        banner->FormatTextTo(gCommonFormatArgs);
+        auto ft = Formatter::Common();
+        banner->FormatTextTo(ft);
         utf8 signString[256];
         if (gConfigGeneral.upper_case_banners)
         {
@@ -451,7 +452,7 @@ void fence_paint(paint_session* session, uint8_t direction, int32_t height, cons
         uint16_t scroll = stringWidth > 0 ? (gCurrentTicks / 2) % stringWidth : 0;
 
         sub_98199C(
-            session, scrolling_text_setup(session, STR_SCROLLING_SIGN_TEXT, scroll, scrollingMode, secondaryColour), 0, 0, 1, 1,
-            13, height + 8, boundsOffset.x, boundsOffset.y, boundsOffset.z);
+            session, scrolling_text_setup(session, STR_SCROLLING_SIGN_TEXT, ft, scroll, scrollingMode, secondaryColour), 0, 0,
+            1, 1, 13, height + 8, boundsOffset.x, boundsOffset.y, boundsOffset.z);
     }
 }

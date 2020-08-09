@@ -16,11 +16,15 @@
 #include <memory>
 #include <vector>
 
-interface IStream;
+namespace OpenRCT2
+{
+    struct IStream;
+}
+
 class Object;
 namespace OpenRCT2
 {
-    interface IPlatformEnvironment;
+    struct IPlatformEnvironment;
 }
 
 namespace OpenRCT2::Localisation
@@ -36,6 +40,7 @@ struct ObjectRepositoryItem
     rct_object_entry ObjectEntry;
     std::string Path;
     std::string Name;
+    std::vector<std::string> Authors;
     std::vector<uint8_t> Sources;
     Object* LoadedObject{};
     struct
@@ -43,7 +48,6 @@ struct ObjectRepositoryItem
         uint8_t RideFlags;
         uint8_t RideCategory[MAX_CATEGORIES_PER_RIDE];
         uint8_t RideType[MAX_RIDE_TYPES_PER_RIDE_ENTRY];
-        uint8_t RideGroupIndex;
     } RideInfo;
     struct
     {
@@ -59,7 +63,7 @@ struct ObjectRepositoryItem
     }
 };
 
-interface IObjectRepository
+struct IObjectRepository
 {
     virtual ~IObjectRepository() = default;
 
@@ -77,8 +81,8 @@ interface IObjectRepository
     virtual void AddObject(const rct_object_entry* objectEntry, const void* data, size_t dataSize) abstract;
     virtual void AddObjectFromFile(const std::string_view& objectName, const void* data, size_t dataSize) abstract;
 
-    virtual void ExportPackedObject(IStream * stream) abstract;
-    virtual void WritePackedObjects(IStream * stream, std::vector<const ObjectRepositoryItem*> & objects) abstract;
+    virtual void ExportPackedObject(OpenRCT2::IStream* stream) abstract;
+    virtual void WritePackedObjects(OpenRCT2::IStream* stream, std::vector<const ObjectRepositoryItem*>& objects) abstract;
 };
 
 std::unique_ptr<IObjectRepository> CreateObjectRepository(const std::shared_ptr<OpenRCT2::IPlatformEnvironment>& env);

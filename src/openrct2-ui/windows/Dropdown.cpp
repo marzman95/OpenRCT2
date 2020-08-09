@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -32,7 +32,7 @@ enum
 };
 
 static rct_widget window_dropdown_widgets[] = {
-    { WWT_IMGBTN, 0, 0, 0, 0, 0, static_cast<uint32_t>(SPR_NONE), STR_NONE },
+    MakeWidget({ 0, 0 }, { 1, 1 }, WWT_IMGBTN, 0),
     { WIDGETS_END },
 };
 
@@ -223,7 +223,7 @@ void window_dropdown_show_text_custom_width(
     _dropdownItemsChecked.reset();
     gDropdownIsColour = false;
     gDropdownDefaultIndex = -1;
-    input_set_state(INPUT_STATE_DROPDOWN_ACTIVE);
+    input_set_state(InputState::DropdownActive);
 }
 
 /**
@@ -303,7 +303,7 @@ void window_dropdown_show_image(
     _dropdownItemsChecked.reset();
     gDropdownIsColour = false;
     gDropdownDefaultIndex = -1;
-    input_set_state(INPUT_STATE_DROPDOWN_ACTIVE);
+    input_set_state(InputState::DropdownActive);
 }
 
 void window_dropdown_close()
@@ -347,8 +347,8 @@ static void window_dropdown_paint(rct_window* w, rct_drawpixelinfo* dpi)
             }
             else
             {
-                gfx_fill_rect(dpi, l, t, r, b, ColourMapA[w->colours[0]].mid_dark);
-                gfx_fill_rect(dpi, l, t + 1, r, b + 1, ColourMapA[w->colours[0]].lightest);
+                gfx_fill_rect(dpi, { { l, t }, { r, b } }, ColourMapA[w->colours[0]].mid_dark);
+                gfx_fill_rect(dpi, { { l, t + 1 }, { r, b + 1 } }, ColourMapA[w->colours[0]].lightest);
             }
         }
         else
@@ -372,8 +372,9 @@ static void window_dropdown_paint(rct_window* w, rct_drawpixelinfo* dpi)
                     image++;
 
                 gfx_draw_sprite(
-                    dpi, image, w->windowPos.x + 2 + (cell_x * _dropdown_item_width),
-                    w->windowPos.y + 2 + (cell_y * _dropdown_item_height), 0);
+                    dpi, image,
+                    w->windowPos + ScreenCoordsXY{ 2 + (cell_x * _dropdown_item_width), 2 + (cell_y * _dropdown_item_height) },
+                    0);
             }
             else
             {
@@ -395,10 +396,10 @@ static void window_dropdown_paint(rct_window* w, rct_drawpixelinfo* dpi)
                         colour = NOT_TRANSLUCENT(w->colours[0]) | COLOUR_FLAG_INSET;
 
                 // Draw item string
+                ScreenCoordsXY screenCoords = { w->windowPos.x + 2 + (cell_x * _dropdown_item_width),
+                                                w->windowPos.y + 2 + (cell_y * _dropdown_item_height) };
                 gfx_draw_string_left_clipped(
-                    dpi, item, static_cast<void*>(&gDropdownItemsArgs[i]), colour,
-                    w->windowPos.x + 2 + (cell_x * _dropdown_item_width), w->windowPos.y + 2 + (cell_y * _dropdown_item_height),
-                    w->width - 5);
+                    dpi, item, static_cast<void*>(&gDropdownItemsArgs[i]), colour, screenCoords, w->width - 5);
             }
         }
     }
@@ -459,7 +460,7 @@ void window_dropdown_show_colour(rct_window* w, rct_widget* widget, uint8_t drop
 
     // Show dropdown
     window_dropdown_show_image(
-        w->windowPos.x + widget->left, w->windowPos.y + widget->top, widget->bottom - widget->top + 1, dropdownColour,
+        w->windowPos.x + widget->left, w->windowPos.y + widget->top, widget->height() + 1, dropdownColour,
         DROPDOWN_FLAG_STAY_OPEN, COLOUR_COUNT, 12, 12, _appropriateImageDropdownItemsPerRow[COLOUR_COUNT]);
 
     gDropdownIsColour = true;

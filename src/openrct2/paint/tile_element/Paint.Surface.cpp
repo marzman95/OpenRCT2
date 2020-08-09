@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -1084,12 +1084,19 @@ void surface_paint(paint_session* session, uint8_t direction, uint16_t height, c
 
         if (!is_staff_list)
         {
-            Staff* staff = (GET_PEEP(staffIndex))->AsStaff();
-            if (!staff->IsPatrolAreaSet({ x, y }))
+            Staff* staff = GetEntity<Staff>(staffIndex);
+            if (staff == nullptr)
             {
-                patrolColour = COLOUR_GREY;
+                log_error("Invalid staff index for draw patrol areas!");
             }
-            staffType = staff->staff_type;
+            else
+            {
+                if (!staff->IsPatrolAreaSet({ x, y }))
+                {
+                    patrolColour = COLOUR_GREY;
+                }
+                staffType = staff->StaffType;
+            }
         }
 
         if (staff_is_patrol_area_set_for_type(static_cast<STAFF_TYPE>(staffType), session->MapPosition))

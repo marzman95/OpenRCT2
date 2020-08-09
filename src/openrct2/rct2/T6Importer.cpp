@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -16,6 +16,7 @@
 #include "../rct12/SawyerChunkReader.h"
 #include "../rct12/SawyerEncoding.h"
 #include "../ride/Ride.h"
+#include "../ride/RideData.h"
 #include "../ride/TrackDesign.h"
 #include "../ride/TrackDesignRepository.h"
 
@@ -25,7 +26,7 @@
 class TD6Importer final : public ITrackImporter
 {
 private:
-    MemoryStream _stream;
+    OpenRCT2::MemoryStream _stream;
     std::string _name;
 
 public:
@@ -39,7 +40,7 @@ public:
         if (String::Equals(extension, ".td6", true))
         {
             _name = GetNameFromTrackPath(path);
-            auto fs = FileStream(path, FILE_MODE_OPEN);
+            auto fs = OpenRCT2::FileStream(path, OpenRCT2::FILE_MODE_OPEN);
             return LoadFromStream(&fs);
         }
         else
@@ -48,7 +49,7 @@ public:
         }
     }
 
-    bool LoadFromStream(IStream* stream) override
+    bool LoadFromStream(OpenRCT2::IStream* stream) override
     {
         if (!gConfigGeneral.allow_loading_with_incorrect_checksum
             && SawyerEncoding::ValidateTrackChecksum(stream) != RCT12TrackDesignVersion::TD6)
@@ -134,7 +135,7 @@ public:
             return nullptr;
         }
 
-        td->operation_setting = std::min(td->operation_setting, RideProperties[td->type].max_value);
+        td->operation_setting = std::min(td->operation_setting, RideTypeDescriptors[td->type].OperatingSettings.MaxValue);
 
         if (td->type == RIDE_TYPE_MAZE)
         {

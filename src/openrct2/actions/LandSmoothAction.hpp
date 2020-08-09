@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -113,7 +113,7 @@ private:
         money32 totalCost = 0;
 
         // check if we need to start at all
-        if (!map_is_location_valid(loc) || !map_is_location_valid({ loc.x + stepX, loc.y + stepY }))
+        if (!LocationValid(loc) || !LocationValid({ loc.x + stepX, loc.y + stepY }))
         {
             return 0;
         }
@@ -149,7 +149,7 @@ private:
             nextLoc.y += stepY;
             // check if we need to continue after raising the current tile
             // this needs to be checked before the tile is changed
-            if (!map_is_location_valid({ nextLoc.x + stepX, nextLoc.y + stepY }))
+            if (!LocationValid({ nextLoc.x + stepX, nextLoc.y + stepY }))
             {
                 shouldContinue &= ~0x3;
             }
@@ -265,7 +265,7 @@ private:
         }
 
         // check if we need to start at all
-        if (!map_is_location_valid(loc) || !map_is_location_valid({ loc.x + stepX, loc.y + stepY }))
+        if (!LocationValid(loc) || !LocationValid({ loc.x + stepX, loc.y + stepY }))
         {
             return 0;
         }
@@ -292,7 +292,7 @@ private:
             nextLoc.y += stepY;
             // check if we need to continue after raising the current tile
             // this needs to be checked before the tile is changed
-            if (!map_is_location_valid({ nextLoc.x + stepX, nextLoc.y + stepY }))
+            if (!LocationValid({ nextLoc.x + stepX, nextLoc.y + stepY }))
             {
                 shouldContinue = false;
             }

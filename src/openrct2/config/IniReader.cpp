@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -96,7 +96,7 @@ private:
     std::unordered_map<std::string, std::string, StringIHash, StringICmp> _values;
 
 public:
-    explicit IniReader(IStream* stream)
+    explicit IniReader(OpenRCT2::IStream* stream)
     {
         uint64_t length = stream->GetLength() - stream->GetPosition();
         _buffer.resize(length);
@@ -147,6 +147,23 @@ public:
             try
             {
                 result = std::stoi(value);
+            }
+            catch (const std::exception&)
+            {
+            }
+        }
+        return result;
+    }
+
+    int64_t GetInt64(const std::string& name, int64_t defaultValue) const override
+    {
+        int64_t result = defaultValue;
+        std::string value;
+        if (TryGetString(name, &value))
+        {
+            try
+            {
+                result = std::stoll(value);
             }
             catch (const std::exception&)
             {
@@ -388,6 +405,11 @@ public:
         return defaultValue;
     }
 
+    int64_t GetInt64([[maybe_unused]] const std::string& name, int64_t defaultValue) const override
+    {
+        return defaultValue;
+    }
+
     float GetFloat([[maybe_unused]] const std::string& name, float defaultValue) const override
     {
         return defaultValue;
@@ -415,7 +437,7 @@ utf8* IIniReader::GetCString(const std::string& name, const utf8* defaultValue) 
     return String::Duplicate(szValue.c_str());
 }
 
-IIniReader* CreateIniReader(IStream* stream)
+IIniReader* CreateIniReader(OpenRCT2::IStream* stream)
 {
     return new IniReader(stream);
 }

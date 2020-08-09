@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -17,6 +17,22 @@
 
 struct rct_ride_entry;
 
+namespace Research
+{
+    enum class EntryType : uint8_t
+    {
+        Scenery = 0,
+        Ride = 1,
+    };
+}
+
+enum
+{
+    RESEARCH_ENTRY_FLAG_FIRST_OF_TYPE = (1 << 0),
+    RESEARCH_ENTRY_FLAG_SCENERY_SET_ALWAYS_RESEARCHED = (1 << 5),
+    RESEARCH_ENTRY_FLAG_RIDE_ALWAYS_RESEARCHED = (1 << 6),
+};
+
 struct ResearchItem
 {
     union
@@ -26,7 +42,7 @@ struct ResearchItem
         {
             ObjectEntryIndex entryIndex;
             uint8_t baseRideType;
-            uint8_t type; // 0: scenery entry, 1: ride entry
+            Research::EntryType type; // 0: scenery entry, 1: ride entry
         };
     };
     uint8_t flags;
@@ -46,7 +62,8 @@ struct ResearchItem
         , category(_category)
     {
     }
-    ResearchItem(uint8_t _type, ObjectEntryIndex _entryIndex, uint8_t _baseRideType, uint8_t _category, uint8_t _flags)
+    ResearchItem(
+        Research::EntryType _type, ObjectEntryIndex _entryIndex, uint8_t _baseRideType, uint8_t _category, uint8_t _flags)
         : entryIndex(_entryIndex)
         , baseRideType(_baseRideType)
         , type(_type)
@@ -65,9 +82,9 @@ struct ResearchItem
         else
         {
             retItem.entryIndex = OpenRCT2EntryIndexToRCTEntryIndex(entryIndex);
-            retItem.baseRideType = baseRideType;
-            retItem.type = type;
-            retItem.flags = flags;
+            retItem.baseRideType = OpenRCT2RideTypeToRCT2RideType(baseRideType);
+            retItem.type = static_cast<uint8_t>(type);
+            retItem.flags = (flags & ~RESEARCH_ENTRY_FLAG_FIRST_OF_TYPE);
             retItem.category = category;
         }
 
@@ -87,24 +104,14 @@ struct ResearchItem
         else
         {
             entryIndex = RCTEntryIndexToOpenRCT2EntryIndex(oldResearchItem.entryIndex);
-            baseRideType = oldResearchItem.baseRideType;
-            type = oldResearchItem.type;
+            auto* rideEntry = get_ride_entry(entryIndex);
+            baseRideType = rideEntry != nullptr ? RCT2RideTypeToOpenRCT2RideType(oldResearchItem.baseRideType, rideEntry)
+                                                : oldResearchItem.baseRideType;
+            type = Research::EntryType{ oldResearchItem.type };
             flags = oldResearchItem.flags;
             category = oldResearchItem.category;
         }
     }
-};
-
-enum
-{
-    RESEARCH_ENTRY_TYPE_SCENERY = 0,
-    RESEARCH_ENTRY_TYPE_RIDE = 1,
-};
-
-enum
-{
-    RESEARCH_ENTRY_FLAG_SCENERY_SET_ALWAYS_RESEARCHED = (1 << 5),
-    RESEARCH_ENTRY_FLAG_RIDE_ALWAYS_RESEARCHED = (1 << 6),
 };
 
 // Only used to mark as null nowadays. Deprecated. TODO: remove.
@@ -192,3 +199,8 @@ void research_fix();
 void research_items_make_all_unresearched();
 void research_items_make_all_researched();
 void research_items_shuffle();
+/**
+ * Determines if a newly invented ride entry should be listed as a new ride
+ * or as a new vehicle for a pre-existing ride.
+ */
+void research_determine_first_of_type();

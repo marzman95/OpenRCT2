@@ -1825,7 +1825,7 @@ STR_2482    :{SMALLFONT}{BLACK}Profitto: {CURRENCY} alla settimana,  valore del 
 STR_2483    :{WINDOW_COLOUR_2}Profitto settimanale: {BLACK}+{CURRENCY2DP}
 STR_2484    :{WINDOW_COLOUR_2}Profitto settimanale: {RED}{CURRENCY2DP}
 STR_2487    :Mostra i “veri” nomi dei visitatori
-STR_2488    :{SMALLFONT}{BLACK}Svaria tra i “veri” nomi dei visitatori e i loro numeri
+STR_2488    :{SMALLFONT}{BLACK}Alterna tra i nomi “veri” dei visitatori e i loro numeri
 STR_2489    :Tasti rapidi
 STR_2490    :Tasti rapidi
 STR_2491    :Ripristina
@@ -2528,19 +2528,6 @@ STR_5160    :{POP16}{MONTH} {PUSH16}{PUSH16}{STRINGID}, anno {POP16}{COMMA16}
 STR_5161    :Formato data:
 STR_5162    :Giorno/Mese/Anno
 STR_5163    :Mese/Giorno/Anno
-STR_5164    :Nome canale Twitch
-STR_5165    :Nomina i visitatori come i follower
-STR_5166    :{SMALLFONT}{BLACK}Nomina i visitatori come i follower{NEWLINE}del proprio canale Twitch
-STR_5167    :Segui i visitatori follower
-STR_5168    :{SMALLFONT}{BLACK}Segui i visitatori che si chiamano come i follower su Twitch
-STR_5169    :Nomina i visitatori come gli utenti in chat su Twitch
-STR_5170    :{SMALLFONT}{BLACK}I visitatori del parco hanno i nomi degli utenti in chat su Twitch
-STR_5171    :Segui i visitatori della chat
-STR_5172    :{SMALLFONT}{BLACK}Attiva informazioni per seguire i visitatori che si chiamano come gli utenti in chat su Twitch
-STR_5173    :Mostra la chat di Twitch come avvisi
-STR_5174    :{SMALLFONT}{BLACK}Mostra i messaggi di chat su Twitch preceduti da !news nelle notifiche all'interno del gioco
-STR_5175    :Inserire il nome del proprio canale Twitch
-STR_5176    :Attiva integrazione con Twitch
 STR_5177    :Modalità schermo:
 STR_5178    :{SMALLFONT}{BLACK}Mostra trucchi finanziari
 STR_5179    :{SMALLFONT}{BLACK}Mostra trucchi dei visitatori
@@ -2637,7 +2624,6 @@ STR_5267    :{SMALLFONT}{BLACK}Cultura and Unità
 STR_5268    :{SMALLFONT}{BLACK}Audio
 STR_5269    :{SMALLFONT}{BLACK}Controlli e interfaccia
 STR_5270    :{SMALLFONT}{BLACK}Varie
-STR_5271    :{SMALLFONT}{BLACK}Twitch
 STR_5272    :{SMALLFONT}{BLACK}Scenari piccoli
 STR_5273    :{SMALLFONT}{BLACK}Scenari grandi
 STR_5274    :{SMALLFONT}{BLACK}Percorso
@@ -2681,32 +2667,12 @@ STR_5311    :{SMALLFONT}{BLACK}Strumenti di debug
 STR_5312    :Mostra console
 STR_5313    :Mostra analizzatore celle
 STR_5314    :Analizzatore celle
-STR_5315    :Erba
-STR_5316    :Sabbia
-STR_5317    :Sporco
-STR_5318    :Rocce
-STR_5319    :Marziano
-STR_5320    :Checkerboard
-STR_5321    :Grass clumps
-STR_5322    :Ghiaccio
-STR_5323    :Griglia (rosso)
-STR_5324    :Griglia (giallo)
-STR_5325    :Griglia (blu)
-STR_5326    :Griglia (verde)
-STR_5327    :Sabbia (scuro)
-STR_5328    :Sabbia (chiaro)
-STR_5329    :Checkerboard (inverted)
-STR_5330    :Visione sotterranea
-STR_5331    :Roccia
-STR_5332    :Legno (rosso)
-STR_5333    :Legno (nero)
-STR_5334    :Ghiaccio
 STR_5335    :Entrata corsa
 STR_5336    :Uscita corsa
 STR_5337    :Entrata Parco
 STR_5338    :Tipo elemento
 STR_5339    :{SMALLFONT}{BLACK}Altezza base
-STR_5340    :{SMALLFONT}{BLACK}Clearance height
+STR_5340    :{SMALLFONT}{BLACK}Altezza margini
 STR_5343    :Colloca automaticamente il personale
 STR_5344    :Changelog
 STR_5345    :Trucchi finanziari
@@ -2819,7 +2785,7 @@ STR_5452    :Visibilità della barra
 STR_5453    :Selezione altra corsa
 STR_5454    :FPS senza limiti
 STR_5455    :Abilita modalità sandbox
-STR_5456    :Disabilita controlli distanze
+STR_5456    :Disabilita controllo margini
 STR_5457    :Disabilita limite supporti
 STR_5458    :Ruota senso orario
 STR_5459    :Ruota antiorario
@@ -2919,7 +2885,7 @@ STR_5554    :{SMALLFONT}{BLACK}Attiva lo strumento montagna
 STR_5555    :Mostra i veicoli di altre attrazioni
 STR_5556    :{SMALLFONT}{BLACK}Caccia giocatore
 STR_5557    :Rimani connesso in caso di asincronia (multigiocatore)
-STR_5558    :È necessario riavviare il gioco per attivare questa opzione
+STR_5558    :Questa impostazione avrà effetto soltanto dopo aver riavviato OpenRCT2
 STR_5559    :Ispezioni ogni 10 min.
 STR_5560    :{SMALLFONT}{BLACK}Imposta l'intervallo di ispezione a “Ogni 10 minuti” su tutte le attrazioni
 STR_5561    :Caricamento lingua fallito
@@ -3176,7 +3142,6 @@ STR_5847    :{SMALLFONT}{BLACK}Seleziona la sequenza del parco utilizzata nei ti
 STR_5848    :{SMALLFONT}{BLACK}Crea e gestisci sequenze di titoli personalizzate
 STR_5849    :{SMALLFONT}{BLACK}Colloca sulla mappa{NEWLINE}i nuovi membri del personale automaticamente
 STR_5851    :{SMALLFONT}{BLACK}Imposta l'intervallo predefinito di ispezione{NEWLINE}nelle nuove attrazioni
-STR_5852    :{SMALLFONT}{BLACK}Imposta il nome del canale TwitchTV che sarà utilizzato per l'integrazione con Twitch
 STR_5853    :{SMALLFONT}{BLACK}Abilita/Disabilita gli effetti sonori
 STR_5854    :{SMALLFONT}{BLACK}Abilita/Disabilita le musiche delle attrazioni
 STR_5855    :{SMALLFONT}{BLACK}Imposta a tutto schermo, senza bordi della finestra{NEWLINE}o come finestra
@@ -3298,7 +3263,7 @@ STR_5970    :{WINDOW_COLOUR_2}ID ingresso: {BLACK}{COMMA16}
 STR_5971    :{WINDOW_COLOUR_2}ID uscita: {BLACK}{COMMA16}
 STR_5972    :{WINDOW_COLOUR_2}ID percorso: {BLACK}{COMMA16}
 STR_5973    :Attacca al successivo
-STR_5974    :{SMALLFONT}{BLACK}Cambia l'altezza della base e l'altezza in modo da posizionarle come l'elemento successivo sull'attuale cella. Ciò permette di costruire più facilmente su questa cella.
+STR_5974    :{SMALLFONT}{BLACK}Cambia l'altezza di base e dei margini affinché sia la stessa del successivo elemento sull'attuale cella. Ciò permette di costruire più facilmente su questa cella.
 STR_5975    :Inclinazione:
 STR_5976    :Piatto
 STR_5977    :Lato destro su
@@ -3529,17 +3494,6 @@ STR_6200    :Reimposta data
 STR_6201    :{MONTH}
 STR_6202    :Stile pavimento virtuale:
 STR_6203    :{SMALLFONT}{BLACK}Se attivo mostra un pavimento virtuale mentre si tiene premuto Ctrl o Maiusc, per facilitare il posizionamento di elementi.
-STR_6204    :Mattoni
-STR_6205    :Ferro
-STR_6206    :Cemento grigio
-STR_6207    :Cemento giallo
-STR_6208    :Cemento rosso
-STR_6209    :Cemento viola
-STR_6210    :Cemento verde
-STR_6211    :Pietra marrone
-STR_6212    :Pietra grigia
-STR_6213    :Grattacielo A
-STR_6214    :Grattacielo B
 STR_6215    :Costruzione
 STR_6216    :Operazione
 STR_6217    :Disponibilità percorso / tracciato
@@ -3577,9 +3531,6 @@ STR_6248    :{WINDOW_COLOUR_1}Rinnovare davvero {STRINGID} al costo di {CURRENCY
 STR_6249    :{WINDOW_COLOUR_1}Rinnovare davvero {STRINGID}?
 STR_6250    :{WINDOW_COLOUR_1}Si è sicuri di voler demolire completamente {STRINGID} e guadagnare {CURRENCY}?
 STR_6251    :L'attrazione non è ancora vuota
-STR_6252    :URL API di Twitch
-STR_6253    :{SMALLFONT}{BLACK}Inserire l'URL delle API per l'integrazione di Twitch. Richiesto per abilitare l'integrazione con Twitch.
-STR_6254    :URL delle API per l'integrazione di Twitch:
 STR_6255    :L'URL non è valido
 STR_6256    :Effetti di rendering
 STR_6257    :Vetro (traslucido)
@@ -3698,6 +3649,11 @@ STR_6369    :Permetti costruzione percorsi ad altezze non valide
 STR_6370    :{SMALLFONT}{BLACK}Permette di collocare pezzi di percorso a qualsiasi intervallo di altezza
 STR_6371    :La cartella specificata contiene un'installazione di RollerCoaster Tycoon 1, ma non contiene il file “csg1i.dat”. Questo file dev'essere copiato dal CD di RollerCoaster Tycoon 1 alla cartella “Data” dell'installazione su disco di RollerCoaster Tycoon 1. 
 STR_6372    :La cartella specificata contiene un'installazione di RollerCoaster Tycoon 1, ma la versione non è compatibile. OpenRCT2 necessita di un'installazione di Loopy Landscapes o di RCT Deluxe per poter utilizzare le risorse di RollerCoaster Tycoon 1.
+STR_6373    :Attiva controllo margini
+STR_6374    :M
+STR_6375    :Attrazione sconosciuta
+STR_6376    :{WINDOW_COLOUR_2}Veicolo attrazione:{NEWLINE}{BLACK}{STRINGID} per {STRINGID}
+STR_6377    :{WINDOW_COLOUR_2}Tipo: {BLACK}{STRINGID} per {STRINGID}
 
 #############
 # Scenarios #

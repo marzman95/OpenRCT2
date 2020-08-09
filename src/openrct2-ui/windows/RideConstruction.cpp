@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -27,7 +27,6 @@
 #include <openrct2/network/network.h>
 #include <openrct2/ride/Ride.h>
 #include <openrct2/ride/RideData.h>
-#include <openrct2/ride/RideGroupManager.h>
 #include <openrct2/ride/Track.h>
 #include <openrct2/ride/TrackData.h>
 #include <openrct2/sprites.h>
@@ -93,41 +92,41 @@ validate_global_widx(WC_RIDE_CONSTRUCTION, WIDX_ROTATE);
 
 static rct_widget window_ride_construction_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-    { WWT_GROUPBOX,         0,  3,      162,    17,     73,     STR_RIDE_CONSTRUCTION_DIRECTION,            STR_NONE                                                },
-    { WWT_GROUPBOX,         0,  3,      162,    76,     116,    STR_RIDE_CONSTRUCTION_SLOPE,                STR_NONE                                                },
-    { WWT_GROUPBOX,         0,  3,      162,    120,    160,    STR_RIDE_CONSTRUCTION_ROLL_BANKING,         STR_NONE                                                },
-    { WWT_FLATBTN,          1,  6,      27,     29,     52,     SPR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL,     STR_RIDE_CONSTRUCTION_LEFT_CURVE_VERY_SMALL_TIP         },
-    { WWT_FLATBTN,          1,  6,      27,     29,     52,     SPR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL,     STR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL_TIP              },
-    { WWT_FLATBTN,          1,  28,     49,     29,     52,     SPR_RIDE_CONSTRUCTION_LEFT_CURVE,           STR_RIDE_CONSTRUCTION_LEFT_CURVE_TIP                    },
-    { WWT_FLATBTN,          1,  72,     93,     29,     52,     SPR_RIDE_CONSTRUCTION_STRAIGHT,             STR_RIDE_CONSTRUCTION_STRAIGHT_TIP                      },
-    { WWT_FLATBTN,          1,  116,    137,    29,     52,     SPR_RIDE_CONSTRUCTION_RIGHT_CURVE,          STR_RIDE_CONSTRUCTION_RIGHT_CURVE_TIP                   },
-    { WWT_FLATBTN,          1,  138,    159,    29,     52,     SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL,    STR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL_TIP             },
-    { WWT_FLATBTN,          1,  138,    159,    29,     52,     SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL,    STR_RIDE_CONSTRUCTION_RIGHT_CURVE_VERY_SMALL_TIP        },
-    { WWT_BUTTON,           1,  17,     148,    55,     68,     STR_YELLOW_STRING,                          STR_RIDE_CONSTRUCTION_OTHER_TRACK_CONFIGURATIONS_TIP    },
-    { WWT_FLATBTN,          1,  23,     46,     88,     111,    SPR_RIDE_CONSTRUCTION_SLOPE_DOWN_STEEP,     STR_RIDE_CONSTRUCTION_STEEP_SLOPE_DOWN_TIP              },
-    { WWT_FLATBTN,          1,  47,     70,     88,     111,    SPR_RIDE_CONSTRUCTION_SLOPE_DOWN,           STR_RIDE_CONSTRUCTION_SLOPE_DOWN_TIP                    },
-    { WWT_FLATBTN,          1,  71,     94,     88,     111,    SPR_RIDE_CONSTRUCTION_SLOPE_LEVEL,          STR_RIDE_CONSTRUCTION_LEVEL_TIP                         },
-    { WWT_FLATBTN,          1,  95,     118,    88,     111,    SPR_RIDE_CONSTRUCTION_SLOPE_UP,             STR_RIDE_CONSTRUCTION_SLOPE_UP_TIP                      },
-    { WWT_FLATBTN,          1,  119,    142,    88,     111,    SPR_RIDE_CONSTRUCTION_SLOPE_UP_STEEP,       STR_RIDE_CONSTRUCTION_STEEP_SLOPE_UP_TIP                },
-    { WWT_FLATBTN,          1,  134,    157,    88,     111,    SPR_CHAIN_LIFT,                             STR_RIDE_CONSTRUCTION_CHAIN_LIFT_TIP                    },
-    { WWT_FLATBTN,          1,  47,     70,     132,    155,    SPR_RIDE_CONSTRUCTION_LEFT_BANK,            STR_RIDE_CONSTRUCTION_ROLL_FOR_LEFT_CURVE_TIP           },
-    { WWT_FLATBTN,          1,  71,     94,     132,    155,    SPR_RIDE_CONSTRUCTION_NO_BANK,              STR_RIDE_CONSTRUCTION_NO_ROLL_TIP                       },
-    { WWT_FLATBTN,          1,  95,     118,    132,    155,    SPR_RIDE_CONSTRUCTION_RIGHT_BANK,           STR_RIDE_CONSTRUCTION_ROLL_FOR_RIGHT_CURVE_TIP          },
-    { WWT_IMGBTN,           1,  3,      162,    164,    333,    0xFFFFFFFF,                                 STR_RIDE_CONSTRUCTION_CONSTRUCT_SELECTED_SECTION_TIP    },
-    { WWT_FLATBTN,          1,  60,     105,    338,    361,    SPR_DEMOLISH_CURRENT_SECTION,               STR_RIDE_CONSTRUCTION_REMOVE_HIGHLIGHTED_SECTION_TIP    },
-    { WWT_FLATBTN,          1,  50,     71,     29,     52,     SPR_RIDE_CONSTRUCTION_LEFT_CURVE_LARGE,     STR_RIDE_CONSTRUCTION_LEFT_CURVE_LARGE_TIP              },
-    { WWT_FLATBTN,          1,  30,     53,     338,    361,    SPR_PREVIOUS,                               STR_RIDE_CONSTRUCTION_MOVE_TO_PREVIOUS_SECTION_TIP      },
-    { WWT_FLATBTN,          1,  112,    135,    338,    361,    SPR_NEXT,                                   STR_RIDE_CONSTRUCTION_MOVE_TO_NEXT_SECTION_TIP          },
-    { WWT_GROUPBOX,         0,  3,      162,    362,    389,    0xFFFFFFFF,                                 STR_NONE                                                },
-    { WWT_BUTTON,           1,  9,      78,     372,    383,    STR_RIDE_CONSTRUCTION_ENTRANCE,             STR_RIDE_CONSTRUCTION_ENTRANCE_TIP                      },
-    { WWT_BUTTON,           1,  87,     156,    372,    383,    STR_RIDE_CONSTRUCTION_EXIT,                 STR_RIDE_CONSTRUCTION_EXIT_TIP                          },
-    { WWT_FLATBTN,          1,  94,     115,    29,     52,     SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_LARGE,    STR_RIDE_CONSTRUCTION_RIGHT_CURVE_LARGE_TIP             },
-    { WWT_FLATBTN,          1,  72,     95,     338,    361,    SPR_ROTATE_ARROW,                           STR_ROTATE_90_TIP                                       },
-    { WWT_FLATBTN,          1,  19,     42,     132,    155,    SPR_RIDE_CONSTRUCTION_U_SHAPED_TRACK,       STR_RIDE_CONSTRUCTION_U_SHAPED_OPEN_TRACK_TIP           },
-    { WWT_FLATBTN,          1,  123,    146,    132,    155,    SPR_RIDE_CONSTRUCTION_O_SHAPED_TRACK,       STR_RIDE_CONSTRUCTION_O_SHAPED_ENCLOSED_TRACK_TIP       },
-    { WWT_GROUPBOX,         0,  96,     162,    120,    160,    STR_RIDE_CONSTRUCTION_SEAT_ROT,             STR_NONE                                                },
-      SPINNER_WIDGETS      (1,  101,    158,    138,    149,    0,                                          STR_RIDE_CONSTRUCTION_SELECT_SEAT_ROTATION_ANGLE_TIP),
-    { WWT_FLATBTN,          1,  139,    162,    338,    361,    SPR_G2_SIMULATE,                            STR_SIMULATE_RIDE_TIP                                   },
+    MakeWidget        ({  3,  17}, {160,  57}, WWT_GROUPBOX, 0, STR_RIDE_CONSTRUCTION_DIRECTION                                                              ),
+    MakeWidget        ({  3,  76}, {160,  41}, WWT_GROUPBOX, 0, STR_RIDE_CONSTRUCTION_SLOPE                                                                  ),
+    MakeWidget        ({  3, 120}, {160,  41}, WWT_GROUPBOX, 0, STR_RIDE_CONSTRUCTION_ROLL_BANKING                                                           ),
+    MakeWidget        ({  6,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL,  STR_RIDE_CONSTRUCTION_LEFT_CURVE_VERY_SMALL_TIP     ),
+    MakeWidget        ({  6,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL,  STR_RIDE_CONSTRUCTION_LEFT_CURVE_SMALL_TIP          ),
+    MakeWidget        ({ 28,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_LEFT_CURVE,        STR_RIDE_CONSTRUCTION_LEFT_CURVE_TIP                ),
+    MakeWidget        ({ 72,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_STRAIGHT,          STR_RIDE_CONSTRUCTION_STRAIGHT_TIP                  ),
+    MakeWidget        ({116,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_RIGHT_CURVE,       STR_RIDE_CONSTRUCTION_RIGHT_CURVE_TIP               ),
+    MakeWidget        ({138,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL, STR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL_TIP         ),
+    MakeWidget        ({138,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_SMALL, STR_RIDE_CONSTRUCTION_RIGHT_CURVE_VERY_SMALL_TIP    ),
+    MakeWidget        ({ 17,  55}, {132,  14}, WWT_BUTTON,   1, STR_YELLOW_STRING,                       STR_RIDE_CONSTRUCTION_OTHER_TRACK_CONFIGURATIONS_TIP),
+    MakeWidget        ({ 23,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_SLOPE_DOWN_STEEP,  STR_RIDE_CONSTRUCTION_STEEP_SLOPE_DOWN_TIP          ),
+    MakeWidget        ({ 47,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_SLOPE_DOWN,        STR_RIDE_CONSTRUCTION_SLOPE_DOWN_TIP                ),
+    MakeWidget        ({ 71,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_SLOPE_LEVEL,       STR_RIDE_CONSTRUCTION_LEVEL_TIP                     ),
+    MakeWidget        ({ 95,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_SLOPE_UP,          STR_RIDE_CONSTRUCTION_SLOPE_UP_TIP                  ),
+    MakeWidget        ({119,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_SLOPE_UP_STEEP,    STR_RIDE_CONSTRUCTION_STEEP_SLOPE_UP_TIP            ),
+    MakeWidget        ({134,  88}, { 24,  24}, WWT_FLATBTN,  1, SPR_CHAIN_LIFT,                          STR_RIDE_CONSTRUCTION_CHAIN_LIFT_TIP                ),
+    MakeWidget        ({ 47, 132}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_LEFT_BANK,         STR_RIDE_CONSTRUCTION_ROLL_FOR_LEFT_CURVE_TIP       ),
+    MakeWidget        ({ 71, 132}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_NO_BANK,           STR_RIDE_CONSTRUCTION_NO_ROLL_TIP                   ),
+    MakeWidget        ({ 95, 132}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_RIGHT_BANK,        STR_RIDE_CONSTRUCTION_ROLL_FOR_RIGHT_CURVE_TIP      ),
+    MakeWidget        ({  3, 164}, {160, 170}, WWT_IMGBTN,   1, 0xFFFFFFFF,                              STR_RIDE_CONSTRUCTION_CONSTRUCT_SELECTED_SECTION_TIP),
+    MakeWidget        ({ 60, 338}, { 46,  24}, WWT_FLATBTN,  1, SPR_DEMOLISH_CURRENT_SECTION,            STR_RIDE_CONSTRUCTION_REMOVE_HIGHLIGHTED_SECTION_TIP),
+    MakeWidget        ({ 50,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_LEFT_CURVE_LARGE,  STR_RIDE_CONSTRUCTION_LEFT_CURVE_LARGE_TIP          ),
+    MakeWidget        ({ 30, 338}, { 24,  24}, WWT_FLATBTN,  1, SPR_PREVIOUS,                            STR_RIDE_CONSTRUCTION_MOVE_TO_PREVIOUS_SECTION_TIP  ),
+    MakeWidget        ({112, 338}, { 24,  24}, WWT_FLATBTN,  1, SPR_NEXT,                                STR_RIDE_CONSTRUCTION_MOVE_TO_NEXT_SECTION_TIP      ),
+    MakeWidget        ({  3, 362}, {160,  28}, WWT_GROUPBOX, 0                                                                                               ),
+    MakeWidget        ({  9, 372}, { 70,  12}, WWT_BUTTON,   1, STR_RIDE_CONSTRUCTION_ENTRANCE,          STR_RIDE_CONSTRUCTION_ENTRANCE_TIP                  ),
+    MakeWidget        ({ 87, 372}, { 70,  12}, WWT_BUTTON,   1, STR_RIDE_CONSTRUCTION_EXIT,              STR_RIDE_CONSTRUCTION_EXIT_TIP                      ),
+    MakeWidget        ({ 94,  29}, { 22,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_RIGHT_CURVE_LARGE, STR_RIDE_CONSTRUCTION_RIGHT_CURVE_LARGE_TIP         ),
+    MakeWidget        ({ 72, 338}, { 24,  24}, WWT_FLATBTN,  1, SPR_ROTATE_ARROW,                        STR_ROTATE_90_TIP                                   ),
+    MakeWidget        ({ 19, 132}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_U_SHAPED_TRACK,    STR_RIDE_CONSTRUCTION_U_SHAPED_OPEN_TRACK_TIP       ),
+    MakeWidget        ({123, 132}, { 24,  24}, WWT_FLATBTN,  1, SPR_RIDE_CONSTRUCTION_O_SHAPED_TRACK,    STR_RIDE_CONSTRUCTION_O_SHAPED_ENCLOSED_TRACK_TIP   ),
+    MakeWidget        ({ 96, 120}, { 67,  41}, WWT_GROUPBOX, 0, STR_RIDE_CONSTRUCTION_SEAT_ROT                                                               ),
+    MakeSpinnerWidgets({101, 138}, { 58,  12}, WWT_SPINNER,  1, 0,                                       STR_RIDE_CONSTRUCTION_SELECT_SEAT_ROTATION_ANGLE_TIP),
+    MakeWidget        ({139, 338}, { 24,  24}, WWT_FLATBTN,  1, SPR_G2_SIMULATE,                         STR_SIMULATE_RIDE_TIP                               ),
     { WIDGETS_END }
 };
 
@@ -2113,13 +2112,10 @@ static std::optional<CoordsXY> ride_get_place_position_from_screen_position(Scre
     {
         if (gInputPlaceObjectModifier & PLACE_OBJECT_MODIFIER_COPY_Z)
         {
-            TileElement* tileElement;
-            rct_viewport* viewport = nullptr;
-            int32_t interactionType;
-            get_map_coordinates_from_pos(screenCoords, 0xFCCA, mapCoords, &interactionType, &tileElement, &viewport);
-            if (interactionType != 0)
+            auto info = get_map_coordinates_from_pos(screenCoords, 0xFCCA);
+            if (info.SpriteType != VIEWPORT_INTERACTION_ITEM_NONE)
             {
-                _trackPlaceCtrlZ = tileElement->GetBaseZ();
+                _trackPlaceCtrlZ = info.Element->GetBaseZ();
                 _trackPlaceCtrlState = true;
             }
         }
@@ -2262,10 +2258,12 @@ static void window_ride_construction_invalidate(rct_window* w)
     rct_string_id stringId = STR_RIDE_CONSTRUCTION_SPECIAL;
     if (_currentTrackCurve & RideConstructionSpecialPieceSelected)
     {
-        stringId = RideConfigurationStringIds[_currentTrackCurve & 0xFF];
-        if (stringId == STR_RAPIDS && ride->type == RIDE_TYPE_CAR_RIDE)
+        stringId = RideConfigurationStringIds[_currentTrackCurve & ~RideConstructionSpecialPieceSelected];
+        if (stringId == STR_RAPIDS && ride->type == RIDE_TYPE_MONSTER_TRUCKS)
+        {
             stringId = STR_LOG_BUMPS;
-        if (stringId == STR_SPINNING_CONTROL_TOGGLE_TRACK && ride->type != RIDE_TYPE_STEEL_WILD_MOUSE)
+        }
+        else if (stringId == STR_SPINNING_CONTROL_TOGGLE_TRACK && ride->type != RIDE_TYPE_SPINNING_WILD_MOUSE)
         {
             stringId = STR_BOOSTER;
         }
@@ -2303,7 +2301,9 @@ static void window_ride_construction_invalidate(rct_window* w)
     }
 
     // Set window title arguments
-    ride->FormatNameTo(gCommonFormatArgs + 4);
+    ft = Formatter::Common();
+    ft.Increment(4);
+    ride->FormatNameTo(ft);
 }
 
 /**
@@ -2314,7 +2314,7 @@ static void window_ride_construction_paint(rct_window* w, rct_drawpixelinfo* dpi
 {
     rct_drawpixelinfo clipdpi;
     rct_widget* widget;
-    int32_t x, y, width, height;
+    int32_t width, height;
 
     window_draw_widgets(w, dpi);
 
@@ -2329,26 +2329,24 @@ static void window_ride_construction_paint(rct_window* w, rct_drawpixelinfo* dpi
         return;
 
     // Draw track piece
-    x = w->windowPos.x + widget->left + 1;
-    y = w->windowPos.y + widget->top + 1;
-    width = widget->right - widget->left - 1;
-    height = widget->bottom - widget->top - 1;
-    if (clip_drawpixelinfo(&clipdpi, dpi, x, y, width, height))
+    auto screenCoords = ScreenCoordsXY{ w->windowPos.x + widget->left + 1, w->windowPos.y + widget->top + 1 };
+    width = widget->width() - 1;
+    height = widget->height() - 1;
+    if (clip_drawpixelinfo(&clipdpi, dpi, screenCoords, width, height))
     {
         window_ride_construction_draw_track_piece(
             w, &clipdpi, rideIndex, trackType, trackDirection, liftHillAndInvertedState, width, height);
     }
 
     // Draw cost
-    x = w->windowPos.x + (widget->left + widget->right) / 2;
-    y = w->windowPos.y + widget->bottom - 23;
+    screenCoords = { w->windowPos.x + widget->midX(), w->windowPos.y + widget->bottom - 23 };
     if (_rideConstructionState != RIDE_CONSTRUCTION_STATE_PLACE)
-        gfx_draw_string_centred(dpi, STR_BUILD_THIS, x, y, COLOUR_BLACK, w);
+        gfx_draw_string_centred(dpi, STR_BUILD_THIS, screenCoords, COLOUR_BLACK, w);
 
-    y += 11;
+    screenCoords.y += 11;
     if (_currentTrackPrice != MONEY32_UNDEFINED && !(gParkFlags & PARK_FLAGS_NO_MONEY))
     {
-        gfx_draw_string_centred(dpi, STR_COST_LABEL, x, y, COLOUR_BLACK, static_cast<void*>(&_currentTrackPrice));
+        gfx_draw_string_centred(dpi, STR_COST_LABEL, screenCoords, COLOUR_BLACK, static_cast<void*>(&_currentTrackPrice));
     }
 }
 
@@ -2430,7 +2428,8 @@ static void sub_6CBCE2(
         CoordsXY coords = originCoords + offsets.Rotate(trackDirection);
 
         int32_t baseZ = originZ + trackBlock->z;
-        int32_t clearanceZ = trackBlock->var_07 + RideData5[ride->type].clearance_height + baseZ + (4 * COORDS_Z_STEP);
+        int32_t clearanceZ = trackBlock->var_07 + RideTypeDescriptors[ride->type].Heights.ClearanceHeight + baseZ
+            + (4 * COORDS_Z_STEP);
 
         auto centreTileCoords = TileCoordsXY{ coords };
         auto eastTileCoords = centreTileCoords + TileDirectionDelta[TILE_ELEMENT_DIRECTION_EAST];
@@ -2539,16 +2538,7 @@ void window_ride_construction_update_enabled_track_pieces()
         return;
 
     int32_t rideType = ride_get_alternative_type(ride);
-
-    if (!gCheatsEnableAllDrawableTrackPieces && RideTypeDescriptors[rideType].HasFlag(RIDE_TYPE_FLAG_HAS_RIDE_GROUPS))
-    {
-        const RideGroup* rideGroup = RideGroupManager::GetRideGroup(rideType, rideEntry);
-        _enabledRidePieces = rideGroup->AvailableTrackPieces;
-    }
-    else
-    {
-        _enabledRidePieces = RideTypeDescriptors[rideType].GetAvailableTrackPieces();
-    }
+    _enabledRidePieces = RideTypeDescriptors[rideType].GetAvailableTrackPieces();
 }
 
 /**
@@ -2941,7 +2931,7 @@ static void window_ride_construction_update_widgets(rct_window* w)
     }
 
     int32_t x;
-    if ((is_track_enabled(TRACK_LIFT_HILL) && _currentTrackCurve < 256)
+    if ((is_track_enabled(TRACK_LIFT_HILL) && (_currentTrackCurve & RideConstructionSpecialPieceSelected) == 0)
         || (gCheatsEnableChainLiftOnAllTrack && ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_HAS_TRACK)))
     {
         window_ride_construction_widgets[WIDX_CHAIN_LIFT].type = WWT_FLATBTN;
@@ -3076,7 +3066,7 @@ static void window_ride_construction_update_widgets(rct_window* w)
     bool brakesSelected = _selectedTrackType == TRACK_ELEM_BRAKES
         || _currentTrackCurve == (RideConstructionSpecialPieceSelected | TRACK_ELEM_BRAKES);
     _boosterTrackSelected = track_element_is_booster(ride->type, _selectedTrackType)
-        || (ride->type != RIDE_TYPE_STEEL_WILD_MOUSE
+        || (ride->type != RIDE_TYPE_SPINNING_WILD_MOUSE
             && _currentTrackCurve == (RideConstructionSpecialPieceSelected | TRACK_ELEM_BOOSTER));
 
     if (!brakesSelected && !_boosterTrackSelected)
@@ -3361,13 +3351,13 @@ static void window_ride_construction_show_special_track_dropdown(rct_window* w, 
         if (trackPieceStringId == STR_RAPIDS)
         {
             auto ride = get_ride(_currentRideIndex);
-            if (ride != nullptr && ride->type == RIDE_TYPE_CAR_RIDE)
+            if (ride != nullptr && ride->type == RIDE_TYPE_MONSTER_TRUCKS)
                 trackPieceStringId = STR_LOG_BUMPS;
         }
         if (trackPieceStringId == STR_SPINNING_CONTROL_TOGGLE_TRACK)
         {
             auto ride = get_ride(_currentRideIndex);
-            if (ride != nullptr && ride->type != RIDE_TYPE_STEEL_WILD_MOUSE)
+            if (ride != nullptr && ride->type != RIDE_TYPE_SPINNING_WILD_MOUSE)
                 trackPieceStringId = STR_BOOSTER;
         }
         gDropdownItemsFormat[i] = trackPieceStringId;
@@ -3378,8 +3368,8 @@ static void window_ride_construction_show_special_track_dropdown(rct_window* w, 
     }
 
     window_dropdown_show_text_custom_width(
-        { w->windowPos.x + widget->left, w->windowPos.y + widget->top }, widget->bottom - widget->top + 1, w->colours[1], 0, 0,
-        _numCurrentPossibleRideConfigurations, widget->right - widget->left);
+        { w->windowPos.x + widget->left, w->windowPos.y + widget->top }, widget->height() + 1, w->colours[1], 0, 0,
+        _numCurrentPossibleRideConfigurations, widget->width());
 
     for (int32_t i = 0; i < 32; i++)
     {

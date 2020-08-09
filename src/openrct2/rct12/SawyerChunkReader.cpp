@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -15,7 +15,6 @@
 // memory on a special debug heap and then initialises all the memory to 0xCC.
 #if defined(_WIN32) && defined(DEBUG)
 #    define __USE_HEAP_ALLOC__
-#    define WIN32_LEAN_AND_MEAN
 #    include <windows.h>
 #endif
 
@@ -41,7 +40,7 @@ public:
     }
 };
 
-SawyerChunkReader::SawyerChunkReader(IStream* stream)
+SawyerChunkReader::SawyerChunkReader(OpenRCT2::IStream* stream)
     : _stream(stream)
 {
 }
@@ -52,7 +51,7 @@ void SawyerChunkReader::SkipChunk()
     try
     {
         auto header = _stream->ReadValue<sawyercoding_chunk_header>();
-        _stream->Seek(header.length, STREAM_SEEK_CURRENT);
+        _stream->Seek(header.length, OpenRCT2::STREAM_SEEK_CURRENT);
     }
     catch (const std::exception&)
     {

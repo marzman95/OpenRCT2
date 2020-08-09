@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -98,6 +98,34 @@ struct rct_widget
     // New properties
     WidgetFlags flags{};
     utf8* sztooltip{};
+
+    int16_t width() const
+    {
+        return right - left;
+    }
+
+    int16_t height() const
+    {
+        return bottom - top;
+    }
+
+    int16_t midX() const
+    {
+        return (left + right) / 2;
+    }
+
+    int16_t midY() const
+    {
+        return (top + bottom) / 2;
+    }
+
+    int16_t textTop() const
+    {
+        if (height() >= 10)
+            return std::max<int32_t>(top, top + (height() / 2) - 5);
+        else
+            return top - 1;
+    }
 };
 
 /**
@@ -219,7 +247,11 @@ struct campaign_variables
 {
     int16_t campaign_type;
     int16_t no_weeks; // 0x482
-    uint16_t ride_id; // 0x484
+    union
+    {
+        ride_id_t RideId;            // 0x484
+        ObjectEntryIndex ShopItemId; // 0x484
+    };
     uint32_t pad_486;
 };
 
@@ -685,7 +717,7 @@ void window_push_others_below(rct_window* w1);
 
 rct_window* window_get_main();
 
-void window_scroll_to_location(rct_window* w, int32_t x, int32_t y, int32_t z);
+void window_scroll_to_location(rct_window* w, const CoordsXYZ& coords);
 void window_rotate_camera(rct_window* w, int32_t direction);
 void window_viewport_get_map_coords_by_cursor(
     rct_window* w, int16_t* map_x, int16_t* map_y, int16_t* offset_x, int16_t* offset_y);

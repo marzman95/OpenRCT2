@@ -89,8 +89,8 @@ namespace OpenRCT2::Scripting
             if (id >= 0 && id < MAX_SPRITES)
             {
                 auto spriteId = static_cast<uint16_t>(id);
-                auto sprite = get_sprite(spriteId);
-                if (sprite != nullptr && sprite->generic.sprite_identifier != SPRITE_IDENTIFIER_NULL)
+                auto sprite = GetEntity(spriteId);
+                if (sprite != nullptr && sprite->sprite_identifier != SPRITE_IDENTIFIER_NULL)
                 {
                     return GetEntityAsDukValue(sprite);
                 }
@@ -101,29 +101,29 @@ namespace OpenRCT2::Scripting
 
         std::vector<DukValue> getAllEntities(const std::string& type) const
         {
-            SPRITE_LIST targetList{};
+            EntityListId targetList{};
             uint8_t targetType{};
             if (type == "balloon")
             {
-                targetList = SPRITE_LIST_MISC;
+                targetList = EntityListId::Misc;
                 targetType = SPRITE_MISC_BALLOON;
             }
             if (type == "car")
             {
-                targetList = SPRITE_LIST_TRAIN_HEAD;
+                targetList = EntityListId::TrainHead;
             }
             else if (type == "litter")
             {
-                targetList = SPRITE_LIST_LITTER;
+                targetList = EntityListId::Litter;
             }
             else if (type == "duck")
             {
-                targetList = SPRITE_LIST_MISC;
+                targetList = EntityListId::Misc;
                 targetType = SPRITE_MISC_DUCK;
             }
             else if (type == "peep")
             {
-                targetList = SPRITE_LIST_PEEP;
+                targetList = EntityListId::Peep;
             }
             else
             {
@@ -131,46 +131,31 @@ namespace OpenRCT2::Scripting
             }
 
             std::vector<DukValue> result;
-            auto spriteId = gSpriteListHead[targetList];
-            while (spriteId != SPRITE_INDEX_NULL)
+            for (auto sprite : EntityList(targetList))
             {
-                auto sprite = get_sprite(spriteId);
-                if (sprite == nullptr)
+                // Only the misc list checks the type property
+                if (targetList != EntityListId::Misc || sprite->type == targetType)
                 {
-                    break;
-                }
-                else
-                {
-                    // Only the misc list checks the type property
-                    if (targetList != SPRITE_LIST_MISC || sprite->generic.type == targetType)
+                    if (targetList == EntityListId::Peep)
                     {
-                        if (targetList == SPRITE_LIST_PEEP)
-                        {
-                            result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScPeep>(spriteId)));
-                        }
-                        else if (targetList == SPRITE_LIST_TRAIN_HEAD)
-                        {
-                            auto carId = spriteId;
-                            while (carId != SPRITE_INDEX_NULL)
-                            {
-                                auto car = get_sprite(carId);
-                                if (car == nullptr)
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScEntity>(carId)));
-                                    carId = car->vehicle.next_vehicle_on_train;
-                                }
-                            }
-                        }
+                        if (sprite->Is<Staff>())
+                            result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScStaff>(sprite->sprite_index)));
                         else
+                            result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScGuest>(sprite->sprite_index)));
+                    }
+                    else if (targetList == EntityListId::TrainHead)
+                    {
+                        for (auto carId = sprite->sprite_index; carId != SPRITE_INDEX_NULL;)
                         {
-                            result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScEntity>(spriteId)));
+                            auto car = GetEntity<Vehicle>(carId);
+                            result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScVehicle>(carId)));
+                            carId = car->next_vehicle_on_train;
                         }
                     }
-                    spriteId = sprite->generic.next;
+                    else
+                    {
+                        result.push_back(GetObjectAsDukValue(_context, std::make_shared<ScEntity>(sprite->sprite_index)));
+                    }
                 }
             }
             return result;
@@ -189,13 +174,20 @@ namespace OpenRCT2::Scripting
         }
 
     private:
-        DukValue GetEntityAsDukValue(const rct_sprite* sprite) const
+        DukValue GetEntityAsDukValue(const SpriteBase* sprite) const
         {
-            auto spriteId = sprite->generic.sprite_index;
-            switch (sprite->generic.sprite_identifier)
+            auto spriteId = sprite->sprite_index;
+            switch (sprite->sprite_identifier)
             {
+                case SPRITE_IDENTIFIER_VEHICLE:
+                    return GetObjectAsDukValue(_context, std::make_shared<ScVehicle>(spriteId));
                 case SPRITE_IDENTIFIER_PEEP:
-                    return GetObjectAsDukValue(_context, std::make_shared<ScPeep>(spriteId));
+                {
+                    if (sprite->Is<Staff>())
+                        return GetObjectAsDukValue(_context, std::make_shared<ScStaff>(spriteId));
+                    else
+                        return GetObjectAsDukValue(_context, std::make_shared<ScGuest>(spriteId));
+                }
                 default:
                     return GetObjectAsDukValue(_context, std::make_shared<ScEntity>(spriteId));
             }

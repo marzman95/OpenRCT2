@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -45,8 +45,6 @@ struct Banner
     std::string GetText() const;
     void FormatTextTo(Formatter&, bool addColour) const;
     void FormatTextTo(Formatter&) const;
-    size_t FormatTextTo(void* args, bool addColour) const;
-    size_t FormatTextTo(void* args) const;
 };
 
 enum BANNER_FLAGS

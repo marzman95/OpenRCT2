@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -223,7 +223,7 @@ void InGameConsole::WriteLine(const std::string& input, uint32_t colourFormat)
 
 void InGameConsole::Invalidate() const
 {
-    gfx_set_dirty_blocks(_consoleLeft, _consoleTop, _consoleRight, _consoleBottom);
+    gfx_set_dirty_blocks({ { _consoleLeft, _consoleTop }, { _consoleRight, _consoleBottom } });
 }
 
 void InGameConsole::Update()
@@ -290,10 +290,11 @@ void InGameConsole::Draw(rct_drawpixelinfo* dpi) const
     Invalidate();
 
     // Give console area a translucent effect.
-    gfx_filter_rect(dpi, _consoleLeft, _consoleTop, _consoleRight, _consoleBottom, PALETTE_51);
+    gfx_filter_rect(dpi, { { _consoleLeft, _consoleTop }, { _consoleRight, _consoleBottom } }, PALETTE_51);
 
     // Make input area more opaque.
-    gfx_filter_rect(dpi, _consoleLeft, _consoleBottom - lineHeight - 10, _consoleRight, _consoleBottom - 1, PALETTE_51);
+    gfx_filter_rect(
+        dpi, { { _consoleLeft, _consoleBottom - lineHeight - 10 }, { _consoleRight, _consoleBottom - 1 } }, PALETTE_51);
 
     // Paint background colour.
     uint8_t backgroundColour = theme_get_colour(WC_CONSOLE, 0);
@@ -324,11 +325,10 @@ void InGameConsole::Draw(rct_drawpixelinfo* dpi) const
     // Draw caret
     if (_consoleCaretTicks < CONSOLE_CARET_FLASH_THRESHOLD)
     {
-        int32_t caretX = screenCoords.x + gfx_get_string_width(_consoleCurrentLine);
-        int32_t caretY = screenCoords.y + lineHeight;
+        auto caret = screenCoords + ScreenCoordsXY{ gfx_get_string_width(_consoleCurrentLine), lineHeight };
 
         uint8_t caretColour = ColourMapA[BASE_COLOUR(textColour)].lightest;
-        gfx_fill_rect(dpi, caretX, caretY, caretX + CONSOLE_CARET_WIDTH, caretY, caretColour);
+        gfx_fill_rect(dpi, { caret, caret + ScreenCoordsXY{ CONSOLE_CARET_WIDTH, 0 } }, caretColour);
     }
 
     // What about border colours?
@@ -337,13 +337,15 @@ void InGameConsole::Draw(rct_drawpixelinfo* dpi) const
 
     // Input area top border
     gfx_fill_rect(
-        dpi, _consoleLeft, _consoleBottom - lineHeight - 11, _consoleRight, _consoleBottom - lineHeight - 11, borderColour1);
+        dpi, { { _consoleLeft, _consoleBottom - lineHeight - 11 }, { _consoleRight, _consoleBottom - lineHeight - 11 } },
+        borderColour1);
     gfx_fill_rect(
-        dpi, _consoleLeft, _consoleBottom - lineHeight - 10, _consoleRight, _consoleBottom - lineHeight - 10, borderColour2);
+        dpi, { { _consoleLeft, _consoleBottom - lineHeight - 10 }, { _consoleRight, _consoleBottom - lineHeight - 10 } },
+        borderColour2);
 
     // Input area bottom border
-    gfx_fill_rect(dpi, _consoleLeft, _consoleBottom - 1, _consoleRight, _consoleBottom - 1, borderColour1);
-    gfx_fill_rect(dpi, _consoleLeft, _consoleBottom - 0, _consoleRight, _consoleBottom - 0, borderColour2);
+    gfx_fill_rect(dpi, { { _consoleLeft, _consoleBottom - 1 }, { _consoleRight, _consoleBottom - 1 } }, borderColour1);
+    gfx_fill_rect(dpi, { { _consoleLeft, _consoleBottom }, { _consoleRight, _consoleBottom } }, borderColour2);
 }
 
 // Calculates the amount of visible lines, based on the console size, excluding the input line.

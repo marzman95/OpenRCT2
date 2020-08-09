@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -37,15 +37,10 @@ enum WINDOW_NETWORK_WIDGET_IDX {
     WIDX_TAB1,
 };
 
-#define MAIN_NETWORK_WIDGETS \
-    { WWT_FRAME,            0,  0,          WW - 1,    0,      WH - 1,    STR_NONE,                   STR_NONE },                 /* panel / background   */  \
-    { WWT_CAPTION,          0,  1,          WW - 2,    1,      14,        STR_NONE,                   STR_WINDOW_TITLE_TIP },     /* title bar            */ \
-    { WWT_CLOSEBOX,         0,  WW - 13,    WW - 3,    2,      13,        STR_CLOSE_X,                STR_CLOSE_WINDOW_TIP },     /* close x button       */  \
-    { WWT_RESIZE,           1,  0,          WW - 1,    43,     WH - 1,    0xFFFFFFFF,                 STR_NONE },                 /* content panel        */  \
-    { WWT_TAB,              1,  3,          33,        17,     43,        IMAGE_TYPE_REMAP | SPR_TAB,       STR_SHOW_SERVER_INFO_TIP }, /* tab                  */  \
-
 static rct_widget window_network_information_widgets[] = {
-    MAIN_NETWORK_WIDGETS
+    WINDOW_SHIM(STR_NONE, WW, WH),
+    MakeWidget     ({  0, 43}, {450, 167}, WWT_RESIZE,   1                                       ), // content panel
+    MakeRemapWidget({  3, 17}, { 31,  27}, WWT_TAB,      1, SPR_TAB,     STR_SHOW_SERVER_INFO_TIP), // tab
     { WIDGETS_END }
 };
 
@@ -301,7 +296,8 @@ static void window_network_information_invalidate(rct_window* w)
 
 static void graph_draw_bar(rct_drawpixelinfo* dpi, int32_t x, int32_t y, int32_t height, int32_t width, int32_t colour)
 {
-    gfx_fill_rect(dpi, x, y, x + width, y + height, colour);
+    auto coords = ScreenCoordsXY{ x, y };
+    gfx_fill_rect(dpi, { coords, coords + ScreenCoordsXY{ width, height } }, colour);
 }
 
 static void window_network_draw_graph(
@@ -310,11 +306,21 @@ static void window_network_draw_graph(
     float dataMax = received ? _graphMaxIn : _graphMaxOut;
 
     // Draw box.
-    gfx_draw_line(dpi, x, y, x, y + height, COLOUR_BLACK);
-    gfx_draw_line(dpi, x, y + height, x + width, y + height, COLOUR_BLACK);
+    auto right1 = ScreenCoordsXY{ x, y };
+    auto right2 = ScreenCoordsXY{ x, y + height };
+    gfx_draw_line(dpi, { right1, right2 }, COLOUR_BLACK);
 
-    gfx_draw_line(dpi, x, y, x + width, y, COLOUR_BLACK);
-    gfx_draw_line(dpi, x + width, y, x + width, y + height, COLOUR_BLACK);
+    auto left1 = ScreenCoordsXY{ x, y + height };
+    auto left2 = ScreenCoordsXY{ x + width, y + height };
+    gfx_draw_line(dpi, { left1, left2 }, COLOUR_BLACK);
+
+    auto bottom1 = ScreenCoordsXY{ x, y };
+    auto bottom2 = ScreenCoordsXY{ x + width, y };
+    gfx_draw_line(dpi, { bottom1, bottom2 }, COLOUR_BLACK);
+
+    auto top1 = ScreenCoordsXY{ x + width, y };
+    auto top2 = ScreenCoordsXY{ x + width, y + height };
+    gfx_draw_line(dpi, { top1, top2 }, COLOUR_BLACK);
 
     // Draw graph inside box
     x = x + 1;
@@ -323,7 +329,7 @@ static void window_network_draw_graph(
     height = height - 2;
 
     rct_drawpixelinfo clippedDPI;
-    if (!clip_drawpixelinfo(&clippedDPI, dpi, x, y, width, height))
+    if (!clip_drawpixelinfo(&clippedDPI, dpi, { x, y }, width, height))
         return;
 
     dpi = &clippedDPI;
@@ -391,21 +397,21 @@ static void window_network_information_paint(rct_window* w, rct_drawpixelinfo* d
     const int32_t graphHeight = (totalHeight - totalHeightText - heightTab) / 2;
 
     rct_drawpixelinfo clippedDPI;
-    if (clip_drawpixelinfo(&clippedDPI, dpi, w->windowPos.x, w->windowPos.y, w->width, w->height))
+    if (clip_drawpixelinfo(&clippedDPI, dpi, w->windowPos, w->width, w->height))
     {
         dpi = &clippedDPI;
 
-        ScreenCoordsXY screenCoords(padding, heightTab + padding);
+        auto screenCoords = ScreenCoordsXY{ padding, heightTab + padding };
 
         // Received stats.
         {
-            gfx_draw_string_left(dpi, STR_NETWORK_RECEIVE, nullptr, PALETTE_INDEX_10, screenCoords.x, screenCoords.y);
+            gfx_draw_string_left(dpi, STR_NETWORK_RECEIVE, nullptr, PALETTE_INDEX_10, screenCoords);
 
             format_readable_speed(textBuffer, sizeof(textBuffer), _bytesInSec);
             gfx_draw_string(dpi, textBuffer, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY(70, 0));
 
             gfx_draw_string_left(
-                dpi, STR_NETWORK_TOTAL_RECEIVED, nullptr, PALETTE_INDEX_10, screenCoords.x + 200, screenCoords.y);
+                dpi, STR_NETWORK_TOTAL_RECEIVED, nullptr, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY{ 200, 0 });
 
             format_readable_size(textBuffer, sizeof(textBuffer), _networkStats.bytesReceived[NETWORK_STATISTICS_GROUP_TOTAL]);
             gfx_draw_string(dpi, textBuffer, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY(300, 0));
@@ -418,12 +424,13 @@ static void window_network_information_paint(rct_window* w, rct_drawpixelinfo* d
 
         // Sent stats.
         {
-            gfx_draw_string_left(dpi, STR_NETWORK_SEND, nullptr, PALETTE_INDEX_10, screenCoords.x, screenCoords.y);
+            gfx_draw_string_left(dpi, STR_NETWORK_SEND, nullptr, PALETTE_INDEX_10, screenCoords);
 
             format_readable_speed(textBuffer, sizeof(textBuffer), _bytesOutSec);
             gfx_draw_string(dpi, textBuffer, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY(70, 0));
 
-            gfx_draw_string_left(dpi, STR_NETWORK_TOTAL_SENT, nullptr, PALETTE_INDEX_10, screenCoords.x + 200, screenCoords.y);
+            gfx_draw_string_left(
+                dpi, STR_NETWORK_TOTAL_SENT, nullptr, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY{ 200, 0 });
 
             format_readable_size(textBuffer, sizeof(textBuffer), _networkStats.bytesSent[NETWORK_STATISTICS_GROUP_TOTAL]);
             gfx_draw_string(dpi, textBuffer, PALETTE_INDEX_10, screenCoords + ScreenCoordsXY(300, 0));
@@ -442,7 +449,7 @@ static void window_network_information_paint(rct_window* w, rct_drawpixelinfo* d
 
                 // Draw color stripe.
                 gfx_fill_rect(
-                    dpi, screenCoords.x, screenCoords.y + 4, screenCoords.x + 4, screenCoords.y + 6,
+                    dpi, { screenCoords + ScreenCoordsXY{ 0, 4 }, screenCoords + ScreenCoordsXY{ 4, 6 } },
                     NetworkTrafficGroupColors[i]);
 
                 // Draw text.
@@ -475,7 +482,7 @@ static void window_network_draw_tab_image(rct_window* w, rct_drawpixelinfo* dpi,
         }
 
         gfx_draw_sprite(
-            dpi, spriteIndex, w->windowPos.x + w->widgets[widgetIndex].left, w->windowPos.y + w->widgets[widgetIndex].top, 0);
+            dpi, spriteIndex, w->windowPos + ScreenCoordsXY{ w->widgets[widgetIndex].left, w->widgets[widgetIndex].top }, 0);
     }
 }
 

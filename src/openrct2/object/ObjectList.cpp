@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -59,8 +59,8 @@ int32_t object_entry_group_encoding[] = {
 bool object_entry_is_empty(const rct_object_entry* entry)
 {
     uint64_t a, b;
-    std::memcpy(&a, (uint8_t*)entry, 8);
-    std::memcpy(&b, (uint8_t*)entry + 8, 8);
+    std::memcpy(&a, reinterpret_cast<const uint8_t*>(entry), 8);
+    std::memcpy(&b, reinterpret_cast<const uint8_t*>(entry) + 8, 8);
 
     if (a == 0xFFFFFFFFFFFFFFFF && b == 0xFFFFFFFFFFFFFFFF)
         return true;

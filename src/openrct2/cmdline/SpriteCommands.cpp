@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -32,12 +32,14 @@ static exitcode_t HandleSprite(CommandLineArgEnumerator *argEnumerator);
 const CommandLineCommand CommandLine::SpriteCommands[]
 {
     // Main commands
-    DefineCommand("append",    "<spritefile> <input> [x_offset y_offset]", SpriteOptions, HandleSprite),
-    DefineCommand("build",     "<spritefile> <json path> [silent]",        SpriteOptions, HandleSprite),
-    DefineCommand("create",    "<spritefile>",                             SpriteOptions, HandleSprite),
-    DefineCommand("details",   "<spritefile> [idx]",                       SpriteOptions, HandleSprite),
-    DefineCommand("export",    "<spritefile> <idx> <output>",              SpriteOptions, HandleSprite),
-    DefineCommand("exportall", "<spritefile> <output directory>",          SpriteOptions, HandleSprite),
+    DefineCommand("append",       "<spritefile> <input> [x_offset y_offset]", SpriteOptions, HandleSprite),
+    DefineCommand("build",        "<spritefile> <json path> [silent]",        SpriteOptions, HandleSprite),
+    DefineCommand("create",       "<spritefile>",                             SpriteOptions, HandleSprite),
+    DefineCommand("details",      "<spritefile> [idx]",                       SpriteOptions, HandleSprite),
+    DefineCommand("export",       "<spritefile> <idx> <output>",              SpriteOptions, HandleSprite),
+    DefineCommand("exportall",    "<spritefile> <output directory>",          SpriteOptions, HandleSprite),
+    DefineCommand("exportalldat", "<DAT identifier> <output directory>",      SpriteOptions, HandleSprite),
+
     CommandTableEnd
 };
 // clang-format on

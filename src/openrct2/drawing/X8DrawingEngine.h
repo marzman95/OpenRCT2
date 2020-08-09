@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -17,7 +17,7 @@ namespace OpenRCT2
 {
     namespace Ui
     {
-        interface IUiContext;
+        struct IUiContext;
     } // namespace Ui
 
     namespace Drawing
@@ -98,7 +98,7 @@ namespace OpenRCT2
 
             void Initialise() override;
             void Resize(uint32_t width, uint32_t height) override;
-            void SetPalette(const rct_palette_entry* palette) override;
+            void SetPalette(const GamePalette& palette) override;
             void SetVSync(bool vsync) override;
             void Invalidate(int32_t left, int32_t top, int32_t right, int32_t bottom) override;
             void BeginDraw() override;
@@ -123,6 +123,7 @@ namespace OpenRCT2
             void ConfigureDirtyGrid();
             static void ResetWindowVisbilities();
             void DrawAllDirtyBlocks();
+            uint32_t GetNumDirtyRows(const uint32_t x, const uint32_t y, const uint32_t columns);
             void DrawDirtyBlocks(uint32_t x, uint32_t y, uint32_t columns, uint32_t rows);
         };
 #ifdef __WARN_SUGGEST_FINAL_TYPES__
@@ -147,7 +148,7 @@ namespace OpenRCT2
             void DrawSprite(uint32_t image, int32_t x, int32_t y, uint32_t tertiaryColour) override;
             void DrawSpriteRawMasked(int32_t x, int32_t y, uint32_t maskImage, uint32_t colourImage) override;
             void DrawSpriteSolid(uint32_t image, int32_t x, int32_t y, uint8_t colour) override;
-            void DrawGlyph(uint32_t image, int32_t x, int32_t y, uint8_t* palette) override;
+            void DrawGlyph(uint32_t image, int32_t x, int32_t y, const PaletteMap& paletteMap) override;
 
             void SetDPI(rct_drawpixelinfo* dpi);
         };

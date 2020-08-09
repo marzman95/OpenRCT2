@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -33,12 +33,11 @@ enum {
 
 static rct_widget window_viewport_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-    { WWT_RESIZE,           1,  0,  0,  14, 0,  0xFFFFFFFF,         STR_NONE                },  // resize
-    { WWT_VIEWPORT,         0,  3,  0,  17, 0,  0xFFFFFFFF,         STR_NONE                },  // viewport
-
-    { WWT_FLATBTN,          0,  0,  0,  17, 40, SPR_G2_ZOOM_IN,     STR_ZOOM_IN_TIP         },  // zoom in
-    { WWT_FLATBTN,          0,  0,  0,  41, 64, SPR_G2_ZOOM_OUT,    STR_ZOOM_OUT_TIP        },  // zoom out
-    { WWT_FLATBTN,          0,  0,  0,  65, 88, SPR_LOCATE,         STR_LOCATE_SUBJECT_TIP  },  // locate
+    MakeWidget({      0, 14}, { WW - 1, WH - 1}, WWT_RESIZE,   1                                         ), // resize
+    MakeWidget({      3, 17}, {WW - 26, WH - 3}, WWT_VIEWPORT, 0                                         ), // viewport
+    MakeWidget({WW - 25, 17}, {     24,     24}, WWT_FLATBTN,  0, SPR_G2_ZOOM_IN,  STR_ZOOM_IN_TIP       ), // zoom in
+    MakeWidget({WW - 25, 41}, {     24,     24}, WWT_FLATBTN,  0, SPR_G2_ZOOM_OUT, STR_ZOOM_OUT_TIP      ), // zoom out
+    MakeWidget({WW - 25, 65}, {     24,     24}, WWT_FLATBTN,  0, SPR_LOCATE,      STR_LOCATE_SUBJECT_TIP), // locate
     { WIDGETS_END },
 };
 
@@ -146,11 +145,9 @@ static void window_viewport_mouseup(rct_window* w, rct_widgetindex widgetIndex)
             mainWindow = window_get_main();
             if (mainWindow != nullptr)
             {
-                CoordsXY mapCoords;
-                get_map_coordinates_from_pos(
-                    { w->windowPos.x + (w->width / 2), w->windowPos.y + (w->height / 2) }, VIEWPORT_INTERACTION_MASK_NONE,
-                    mapCoords, nullptr, nullptr, nullptr);
-                window_scroll_to_location(mainWindow, mapCoords.x, mapCoords.y, tile_element_height(mapCoords));
+                auto info = get_map_coordinates_from_pos(
+                    { w->windowPos.x + (w->width / 2), w->windowPos.y + (w->height / 2) }, VIEWPORT_INTERACTION_MASK_NONE);
+                window_scroll_to_location(mainWindow, { info.Loc, tile_element_height(info.Loc) });
             }
             break;
     }
@@ -210,8 +207,8 @@ static void window_viewport_invalidate(rct_window* w)
         w->disabled_widgets |= 1 << WIDX_ZOOM_OUT;
 
     viewport->pos = w->windowPos + ScreenCoordsXY{ viewportWidget->left, viewportWidget->top };
-    viewport->width = viewportWidget->right - viewportWidget->left;
-    viewport->height = viewportWidget->bottom - viewportWidget->top;
+    viewport->width = viewportWidget->width();
+    viewport->height = viewportWidget->height();
     viewport->view_width = viewport->width * viewport->zoom;
     viewport->view_height = viewport->height * viewport->zoom;
 }

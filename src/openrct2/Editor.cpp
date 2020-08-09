@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -87,7 +87,7 @@ namespace Editor
         gS6Info.category = SCENARIO_CATEGORY_OTHER;
         viewport_init_all();
         rct_window* mainWindow = context_open_window_view(WV_EDITOR_MAIN);
-        mainWindow->SetLocation(2400, 2400, 112);
+        mainWindow->SetLocation(TileCoordsXYZ{ 75, 75, 14 }.ToCoordsXYZ());
         load_palette();
         gScreenAge = 0;
         gScenarioName = language_get_string(STR_MY_NEW_SCENARIO);
@@ -140,7 +140,7 @@ namespace Editor
         gS6Info.editor_step = EDITOR_STEP_OBJECTIVE_SELECTION;
         gS6Info.category = SCENARIO_CATEGORY_OTHER;
         viewport_init_all();
-        news_item_init_queue();
+        News::InitQueue();
         context_open_window_view(WV_EDITOR_MAIN);
         FinaliseMainView();
         gScreenAge = 0;
@@ -163,7 +163,7 @@ namespace Editor
         gS6Info.editor_step = EDITOR_STEP_OBJECT_SELECTION;
         viewport_init_all();
         rct_window* mainWindow = context_open_window_view(WV_EDITOR_MAIN);
-        mainWindow->SetLocation(2400, 2400, 112);
+        mainWindow->SetLocation(TileCoordsXYZ{ 75, 75, 14 }.ToCoordsXYZ());
         load_palette();
     }
 
@@ -184,7 +184,7 @@ namespace Editor
         gS6Info.editor_step = EDITOR_STEP_OBJECT_SELECTION;
         viewport_init_all();
         rct_window* mainWindow = context_open_window_view(WV_EDITOR_MAIN);
-        mainWindow->SetLocation(2400, 2400, 112);
+        mainWindow->SetLocation(TileCoordsXYZ{ 75, 75, 14 }.ToCoordsXYZ());
         load_palette();
     }
 
@@ -270,6 +270,7 @@ namespace Editor
     static bool ReadS6(const char* path)
     {
         auto extension = path_get_extension(path);
+        auto loadedFromSave = false;
         if (_stricmp(extension, ".sc6") == 0)
         {
             load_from_sc6(path);
@@ -277,9 +278,10 @@ namespace Editor
         else if (_stricmp(extension, ".sv6") == 0 || _stricmp(extension, ".sv7") == 0)
         {
             load_from_sv6(path);
+            loadedFromSave = true;
         }
 
-        ClearMapForEditing(true);
+        ClearMapForEditing(loadedFromSave);
 
         gS6Info.editor_step = EDITOR_STEP_LANDSCAPE_EDITOR;
         gScreenAge = 0;
@@ -309,7 +311,7 @@ namespace Editor
         //
         for (int32_t i = 0; i < MAX_SPRITES; i++)
         {
-            auto peep = get_sprite(i)->AsPeep();
+            auto peep = GetEntity<Peep>(i);
             if (peep != nullptr)
             {
                 peep->SetName({});
@@ -362,7 +364,7 @@ namespace Editor
 
         climate_reset(gClimate);
 
-        news_item_init_queue();
+        News::InitQueue();
     }
 
     /**

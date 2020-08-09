@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -221,8 +221,7 @@ uint8_t RCT12TrackElement::GetColourScheme() const
 
 uint8_t RCT12TrackElement::GetStationIndex() const
 {
-    if (trackType == TRACK_ELEM_END_STATION || trackType == TRACK_ELEM_BEGIN_STATION || trackType == TRACK_ELEM_MIDDLE_STATION
-        || trackType == TRACK_ELEM_TOWER_BASE)
+    if (track_type_is_station(trackType) || trackType == TRACK_ELEM_TOWER_BASE)
     {
         return (sequence & RCT12_TRACK_ELEMENT_SEQUENCE_STATION_INDEX_MASK) >> 4;
     }
@@ -255,7 +254,7 @@ uint8_t RCT12TrackElement::GetBrakeBoosterSpeed() const
 
 bool RCT12TrackElement::HasGreenLight() const
 {
-    if (trackType == TRACK_ELEM_END_STATION || trackType == TRACK_ELEM_BEGIN_STATION || trackType == TRACK_ELEM_MIDDLE_STATION)
+    if (track_type_is_station(trackType))
     {
         return (sequence & MAP_ELEM_TRACK_SEQUENCE_GREEN_LIGHT) != 0;
     }
@@ -340,7 +339,7 @@ bool RCT12SmallSceneryElement::NeedsSupports() const
 
 uint32_t RCT12LargeSceneryElement::GetEntryIndex() const
 {
-    return entryIndex & TILE_ELEMENT_LARGE_TYPE_MASK;
+    return entryIndex & RCT12_TILE_ELEMENT_LARGE_TYPE_MASK;
 }
 
 uint16_t RCT12LargeSceneryElement::GetSequenceIndex() const
@@ -449,7 +448,7 @@ uint8_t RCT12EntranceElement::GetRideIndex() const
 
 uint8_t RCT12EntranceElement::GetStationIndex() const
 {
-    return (index & MAP_ELEM_TRACK_SEQUENCE_STATION_INDEX_MASK) >> 4;
+    return (index & RCT12_TRACK_ELEMENT_SEQUENCE_STATION_INDEX_MASK) >> 4;
 }
 
 uint8_t RCT12EntranceElement::GetSequenceIndex() const
@@ -524,13 +523,13 @@ void RCT12TileElement::ClearAs(uint8_t newType)
 
 void RCT12LargeSceneryElement::SetEntryIndex(uint32_t newIndex)
 {
-    entryIndex &= ~TILE_ELEMENT_LARGE_TYPE_MASK;
-    entryIndex |= (newIndex & TILE_ELEMENT_LARGE_TYPE_MASK);
+    entryIndex &= ~RCT12_TILE_ELEMENT_LARGE_TYPE_MASK;
+    entryIndex |= (newIndex & RCT12_TILE_ELEMENT_LARGE_TYPE_MASK);
 }
 
 void RCT12LargeSceneryElement::SetSequenceIndex(uint16_t sequence)
 {
-    entryIndex &= TILE_ELEMENT_LARGE_TYPE_MASK;
+    entryIndex &= RCT12_TILE_ELEMENT_LARGE_TYPE_MASK;
     entryIndex |= (sequence << 10);
 }
 
@@ -753,8 +752,7 @@ void RCT12TrackElement::SetSequenceIndex(uint8_t newSequenceIndex)
 
 void RCT12TrackElement::SetStationIndex(uint8_t newStationIndex)
 {
-    if (trackType == TRACK_ELEM_END_STATION || trackType == TRACK_ELEM_BEGIN_STATION || trackType == TRACK_ELEM_MIDDLE_STATION
-        || trackType == TRACK_ELEM_TOWER_BASE)
+    if (track_type_is_station(trackType) || trackType == TRACK_ELEM_TOWER_BASE)
     {
         sequence &= ~RCT12_TRACK_ELEMENT_SEQUENCE_STATION_INDEX_MASK;
         sequence |= (newStationIndex << 4);
@@ -819,7 +817,7 @@ void RCT12TrackElement::SetBlockBrakeClosed(bool isClosed)
 
 void RCT12TrackElement::SetHasGreenLight(uint8_t greenLight)
 {
-    if (trackType == TRACK_ELEM_END_STATION || trackType == TRACK_ELEM_BEGIN_STATION || trackType == TRACK_ELEM_MIDDLE_STATION)
+    if (track_type_is_station(trackType))
     {
         sequence &= ~MAP_ELEM_TRACK_SEQUENCE_GREEN_LIGHT;
         if (greenLight)
@@ -976,7 +974,7 @@ void RCT12EntranceElement::SetSequenceIndex(uint8_t newSequenceIndex)
 
 void RCT12EntranceElement::SetStationIndex(uint8_t stationIndex)
 {
-    index &= ~MAP_ELEM_TRACK_SEQUENCE_STATION_INDEX_MASK;
+    index &= ~RCT12_TRACK_ELEMENT_SEQUENCE_STATION_INDEX_MASK;
     index |= (stationIndex << 4);
 }
 
@@ -1011,7 +1009,7 @@ bool RCT12ResearchItem::IsRandomEndMarker() const
     return rawValue == RCT12_RESEARCHED_ITEMS_END_2;
 }
 
-ObjectEntryIndex RCTEntryIndexToOpenRCT2EntryIndex(RCT12ObjectEntryIndex index)
+ObjectEntryIndex RCTEntryIndexToOpenRCT2EntryIndex(const RCT12ObjectEntryIndex index)
 {
     if (index == RCT12_OBJECT_ENTRY_INDEX_NULL)
         return OBJECT_ENTRY_INDEX_NULL;
@@ -1019,7 +1017,7 @@ ObjectEntryIndex RCTEntryIndexToOpenRCT2EntryIndex(RCT12ObjectEntryIndex index)
     return index;
 }
 
-RCT12ObjectEntryIndex OpenRCT2EntryIndexToRCTEntryIndex(ObjectEntryIndex index)
+RCT12ObjectEntryIndex OpenRCT2EntryIndexToRCTEntryIndex(const ObjectEntryIndex index)
 {
     if (index == OBJECT_ENTRY_INDEX_NULL)
         return RCT12_OBJECT_ENTRY_INDEX_NULL;

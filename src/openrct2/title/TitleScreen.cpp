@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -234,15 +234,15 @@ void TitleScreen::TitleInitialise()
 
         for (size_t s = 0; s < scenarioCount; s++)
         {
-            if (scenario_repository_get_by_index(s)->source_game == SCENARIO_SOURCE_RCT1)
+            if (scenario_repository_get_by_index(s)->source_game == ScenarioSource::RCT1)
             {
                 RCT1Count++;
             }
-            if (scenario_repository_get_by_index(s)->source_game == SCENARIO_SOURCE_RCT1_AA)
+            if (scenario_repository_get_by_index(s)->source_game == ScenarioSource::RCT1_AA)
             {
                 RCT1AAInstalled = true;
             }
-            if (scenario_repository_get_by_index(s)->source_game == SCENARIO_SOURCE_RCT1_LL)
+            if (scenario_repository_get_by_index(s)->source_game == ScenarioSource::RCT1_LL)
             {
                 RCT1LLInstalled = true;
             }
@@ -427,10 +427,9 @@ bool title_is_previewing_sequence()
     return false;
 }
 
-void DrawOpenRCT2(rct_drawpixelinfo* dpi, int32_t x, int32_t y)
+void DrawOpenRCT2(rct_drawpixelinfo* dpi, const ScreenCoordsXY& screenCoords)
 {
     utf8 buffer[256];
-    ScreenCoordsXY screenCoords(x, y);
 
     // Write format codes
     utf8* ch = buffer;
@@ -444,7 +443,8 @@ void DrawOpenRCT2(rct_drawpixelinfo* dpi, int32_t x, int32_t y)
 
     // Invalidate screen area
     int16_t width = static_cast<int16_t>(gfx_get_string_width(buffer));
-    gfx_set_dirty_blocks(x, y, x + width, y + 30); // 30 is an arbitrary height to catch both strings
+    gfx_set_dirty_blocks(
+        { screenCoords, screenCoords + ScreenCoordsXY{ width, 30 } }); // 30 is an arbitrary height to catch both strings
 
     // Write platform information
     snprintf(ch, 256 - (ch - buffer), "%s (%s)", OPENRCT2_PLATFORM, OPENRCT2_ARCHITECTURE);

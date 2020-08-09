@@ -21,7 +21,7 @@ enum {
 };
 
 static rct_widget window_tooltip_widgets[] = {
-    { WWT_IMGBTN, 0, 0, 199, 0, 31, 0xFFFFFFFF, STR_NONE },
+    MakeWidget({0, 0}, {200, 32}, WWT_IMGBTN, 0),
     { WIDGETS_END },
 };
 
@@ -69,7 +69,7 @@ void window_tooltip_reset(const ScreenCoordsXY& screenCoords)
     gTooltipCursorY = screenCoords.y;
     gTooltipTimeout = 0;
     gTooltipWidget.window_classification = 255;
-    input_set_state(INPUT_STATE_NORMAL);
+    input_set_state(InputState::Normal);
     input_set_flag(INPUT_FLAG_4, false);
 }
 
@@ -193,23 +193,23 @@ static void window_tooltip_paint(rct_window* w, rct_drawpixelinfo* dpi)
     int32_t bottom = w->windowPos.y + w->height - 1;
 
     // Background
-    gfx_filter_rect(dpi, left + 1, top + 1, right - 1, bottom - 1, PALETTE_45);
-    gfx_filter_rect(dpi, left + 1, top + 1, right - 1, bottom - 1, PALETTE_GLASS_LIGHT_ORANGE);
+    gfx_filter_rect(dpi, { { left + 1, top + 1 }, { right - 1, bottom - 1 } }, PALETTE_45);
+    gfx_filter_rect(dpi, { { left + 1, top + 1 }, { right - 1, bottom - 1 } }, PALETTE_GLASS_LIGHT_ORANGE);
 
     // Sides
-    gfx_filter_rect(dpi, left + 0, top + 2, left + 0, bottom - 2, PALETTE_DARKEN_3);
-    gfx_filter_rect(dpi, right + 0, top + 2, right + 0, bottom - 2, PALETTE_DARKEN_3);
-    gfx_filter_rect(dpi, left + 2, bottom + 0, right - 2, bottom + 0, PALETTE_DARKEN_3);
-    gfx_filter_rect(dpi, left + 2, top + 0, right - 2, top + 0, PALETTE_DARKEN_3);
+    gfx_filter_rect(dpi, { { left + 0, top + 2 }, { left + 0, bottom - 2 } }, PALETTE_DARKEN_3);
+    gfx_filter_rect(dpi, { { right + 0, top + 2 }, { right + 0, bottom - 2 } }, PALETTE_DARKEN_3);
+    gfx_filter_rect(dpi, { { left + 2, bottom + 0 }, { right - 2, bottom + 0 } }, PALETTE_DARKEN_3);
+    gfx_filter_rect(dpi, { { left + 2, top + 0 }, { right - 2, top + 0 } }, PALETTE_DARKEN_3);
 
     // Corners
-    gfx_filter_pixel(dpi, left + 1, top + 1, PALETTE_DARKEN_3);
-    gfx_filter_pixel(dpi, right - 1, top + 1, PALETTE_DARKEN_3);
-    gfx_filter_pixel(dpi, left + 1, bottom - 1, PALETTE_DARKEN_3);
-    gfx_filter_pixel(dpi, right - 1, bottom - 1, PALETTE_DARKEN_3);
+    gfx_filter_pixel(dpi, { left + 1, top + 1 }, PALETTE_DARKEN_3);
+    gfx_filter_pixel(dpi, { right - 1, top + 1 }, PALETTE_DARKEN_3);
+    gfx_filter_pixel(dpi, { left + 1, bottom - 1 }, PALETTE_DARKEN_3);
+    gfx_filter_pixel(dpi, { right - 1, bottom - 1 }, PALETTE_DARKEN_3);
 
     // Text
     left = w->windowPos.x + ((w->width + 1) / 2) - 1;
     top = w->windowPos.y + 1;
-    draw_string_centred_raw(dpi, left, top, _tooltipNumLines, _tooltipText);
+    draw_string_centred_raw(dpi, { left, top }, _tooltipNumLines, _tooltipText);
 }

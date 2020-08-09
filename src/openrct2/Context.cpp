@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -46,7 +46,6 @@
 #include "localisation/Localisation.h"
 #include "localisation/LocalisationService.h"
 #include "network/DiscordService.h"
-#include "network/Twitch.h"
 #include "network/network.h"
 #include "object/ObjectManager.h"
 #include "object/ObjectRepository.h"
@@ -542,139 +541,143 @@ namespace OpenRCT2
             log_verbose("Context::LoadParkFromFile(%s)", path.c_str());
             try
             {
-                auto fs = FileStream(path, FILE_MODE_OPEN);
-                return LoadParkFromStream(&fs, path, loadTitleScreenOnFail);
+                if (String::Equals(Path::GetExtension(path), ".sea", true))
+                {
+                    auto data = DecryptSea(fs::u8path(path));
+                    auto ms = MemoryStream(data.data(), data.size(), MEMORY_ACCESS::READ);
+                    if (!LoadParkFromStream(&ms, path, loadTitleScreenOnFail))
+                    {
+                        throw std::runtime_error(".sea file may have been renamed.");
+                    }
+                    return true;
+                }
+                else
+                {
+                    auto fs = FileStream(path, FILE_MODE_OPEN);
+                    return LoadParkFromStream(&fs, path, loadTitleScreenOnFail);
+                }
             }
             catch (const std::exception& e)
             {
                 Console::Error::WriteLine(e.what());
+                if (loadTitleScreenOnFail)
+                {
+                    title_load();
+                }
+                auto windowManager = _uiContext->GetWindowManager();
+                windowManager->ShowError(STR_FAILED_TO_LOAD_FILE_CONTAINS_INVALID_DATA, STR_NONE);
             }
             return false;
         }
 
         bool LoadParkFromStream(IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail) final override
         {
-            ClassifiedFileInfo info;
-            if (TryClassifyFile(stream, &info))
+            try
             {
-                if (info.Type == FILE_TYPE::SAVED_GAME || info.Type == FILE_TYPE::SCENARIO)
+                ClassifiedFileInfo info;
+                if (!TryClassifyFile(stream, &info))
                 {
-                    std::unique_ptr<IParkImporter> parkImporter;
-                    if (info.Version <= FILE_TYPE_S4_CUTOFF)
-                    {
-                        // Save is an S4 (RCT1 format)
-                        parkImporter = ParkImporter::CreateS4();
-                    }
-                    else
-                    {
-                        // Save is an S6 (RCT2 format)
-                        parkImporter = ParkImporter::CreateS6(*_objectRepository);
-                    }
+                    throw std::runtime_error("Unable to detect file type");
+                }
 
-                    try
-                    {
-                        auto result = parkImporter->LoadFromStream(
-                            stream, info.Type == FILE_TYPE::SCENARIO, false, path.c_str());
-                        _objectManager->LoadObjects(result.RequiredObjects.data(), result.RequiredObjects.size());
-                        parkImporter->Import();
-                        gScenarioSavePath = path;
-                        gCurrentLoadedPath = path;
-                        gFirstTimeSaving = true;
-                        game_fix_save_vars();
-                        AutoCreateMapAnimations();
-                        sprite_position_tween_reset();
-                        gScreenAge = 0;
-                        gLastAutoSaveUpdate = AUTOSAVE_PAUSE;
+                if (info.Type != FILE_TYPE::SAVED_GAME && info.Type != FILE_TYPE::SCENARIO)
+                {
+                    throw std::runtime_error("Invalid file type.");
+                }
 
-                        bool sendMap = false;
-                        if (info.Type == FILE_TYPE::SAVED_GAME)
-                        {
-                            if (network_get_mode() == NETWORK_MODE_CLIENT)
-                            {
-                                network_close();
-                            }
-                            game_load_init();
-                            if (network_get_mode() == NETWORK_MODE_SERVER)
-                            {
-                                sendMap = true;
-                            }
-                        }
-                        else
-                        {
-                            scenario_begin();
-                            if (network_get_mode() == NETWORK_MODE_SERVER)
-                            {
-                                sendMap = true;
-                            }
-                            if (network_get_mode() == NETWORK_MODE_CLIENT)
-                            {
-                                network_close();
-                            }
-                        }
-                        // This ensures that the newly loaded save reflects the user's
-                        // 'show real names of guests' option, now that it's a global setting
-                        peep_update_names(gConfigGeneral.show_real_names_of_guests);
-                        if (sendMap)
-                        {
-                            network_send_map();
-                        }
-#ifdef USE_BREAKPAD
-                        if (network_get_mode() == NETWORK_MODE_NONE)
-                        {
-                            start_silent_record();
-                        }
-#endif
-                        return true;
-                    }
-                    catch (const ObjectLoadException& e)
-                    {
-                        // This option is used when loading parks from the command line
-                        // to ensure that the title sequence loads before the window
-                        if (loadTitleScreenFirstOnFail)
-                        {
-                            title_load();
-                        }
-                        // The path needs to be duplicated as it's a const here
-                        // which the window function doesn't like
-                        auto intent = Intent(WC_OBJECT_LOAD_ERROR);
-                        intent.putExtra(INTENT_EXTRA_PATH, path);
-                        // TODO: CAST-IMPROVEMENT-NEEDED
-                        intent.putExtra(INTENT_EXTRA_LIST, (void*)e.MissingObjects.data());
-                        intent.putExtra(INTENT_EXTRA_LIST_COUNT, static_cast<uint32_t>(e.MissingObjects.size()));
+                std::unique_ptr<IParkImporter> parkImporter;
+                if (info.Version <= FILE_TYPE_S4_CUTOFF)
+                {
+                    // Save is an S4 (RCT1 format)
+                    parkImporter = ParkImporter::CreateS4();
+                }
+                else
+                {
+                    // Save is an S6 (RCT2 format)
+                    parkImporter = ParkImporter::CreateS6(*_objectRepository);
+                }
 
-                        auto windowManager = _uiContext->GetWindowManager();
-                        windowManager->OpenIntent(&intent);
-                    }
-                    catch (const UnsupportedRCTCFlagException& e)
-                    {
-                        // This option is used when loading parks from the command line
-                        // to ensure that the title sequence loads before the window
-                        if (loadTitleScreenFirstOnFail)
-                        {
-                            title_load();
-                        }
+                auto result = parkImporter->LoadFromStream(stream, info.Type == FILE_TYPE::SCENARIO, false, path.c_str());
+                _objectManager->LoadObjects(result.RequiredObjects.data(), result.RequiredObjects.size());
+                parkImporter->Import();
+                gScenarioSavePath = path;
+                gCurrentLoadedPath = path;
+                gFirstTimeSaving = true;
+                game_fix_save_vars();
+                AutoCreateMapAnimations();
+                sprite_position_tween_reset();
+                gScreenAge = 0;
+                gLastAutoSaveUpdate = AUTOSAVE_PAUSE;
 
-                        auto windowManager = _uiContext->GetWindowManager();
-                        Formatter::Common().Add<uint16_t>(e.Flag);
-                        windowManager->ShowError(STR_FAILED_TO_LOAD_IMCOMPATIBLE_RCTC_FLAG, STR_NONE);
-                    }
-                    catch (const std::exception& e)
+                bool sendMap = false;
+                if (info.Type == FILE_TYPE::SAVED_GAME)
+                {
+                    if (network_get_mode() == NETWORK_MODE_CLIENT)
                     {
-                        // If loading the SV6 or SV4 failed for a reason other than invalid objects
-                        // the current park state will be corrupted so just go back to the title screen.
-                        title_load();
-                        Console::Error::WriteLine(e.what());
+                        network_close();
+                    }
+                    game_load_init();
+                    if (network_get_mode() == NETWORK_MODE_SERVER)
+                    {
+                        sendMap = true;
                     }
                 }
                 else
                 {
-                    Console::Error::WriteLine("Invalid file type.");
+                    scenario_begin();
+                    if (network_get_mode() == NETWORK_MODE_SERVER)
+                    {
+                        sendMap = true;
+                    }
+                    if (network_get_mode() == NETWORK_MODE_CLIENT)
+                    {
+                        network_close();
+                    }
                 }
+                // This ensures that the newly loaded save reflects the user's
+                // 'show real names of guests' option, now that it's a global setting
+                peep_update_names(gConfigGeneral.show_real_names_of_guests);
+                if (sendMap)
+                {
+                    network_send_map();
+                }
+#ifdef USE_BREAKPAD
+                if (network_get_mode() == NETWORK_MODE_NONE)
+                {
+                    start_silent_record();
+                }
+#endif
+                return true;
             }
-            else
+            catch (const ObjectLoadException& e)
             {
-                Console::Error::WriteLine("Unable to detect file type.");
+                // The path needs to be duplicated as it's a const here
+                // which the window function doesn't like
+                auto intent = Intent(WC_OBJECT_LOAD_ERROR);
+                intent.putExtra(INTENT_EXTRA_PATH, path);
+                intent.putExtra(INTENT_EXTRA_LIST, const_cast<rct_object_entry*>(e.MissingObjects.data()));
+                intent.putExtra(INTENT_EXTRA_LIST_COUNT, static_cast<uint32_t>(e.MissingObjects.size()));
+
+                auto windowManager = _uiContext->GetWindowManager();
+                windowManager->OpenIntent(&intent);
             }
+            catch (const UnsupportedRCTCFlagException& e)
+            {
+                auto windowManager = _uiContext->GetWindowManager();
+                Formatter::Common().Add<uint16_t>(e.Flag);
+                windowManager->ShowError(STR_FAILED_TO_LOAD_IMCOMPATIBLE_RCTC_FLAG, STR_NONE);
+            }
+            catch (const std::exception& e)
+            {
+                Console::Error::WriteLine(e.what());
+            }
+
+            // If loading the SV6 or SV4 failed return to the title screen if requested.
+            if (loadTitleScreenFirstOnFail)
+            {
+                title_load();
+            }
+
             return false;
         }
 
@@ -723,33 +726,33 @@ namespace OpenRCT2
          */
         void Launch()
         {
-            gIntroState = INTRO_STATE_NONE;
+            gIntroState = IntroState::None;
             if (gOpenRCT2Headless)
             {
                 // NONE or OPEN are the only allowed actions for headless mode
-                if (gOpenRCT2StartupAction != STARTUP_ACTION_OPEN)
+                if (gOpenRCT2StartupAction != StartupAction::Open)
                 {
-                    gOpenRCT2StartupAction = STARTUP_ACTION_NONE;
+                    gOpenRCT2StartupAction = StartupAction::None;
                 }
             }
             else
             {
-                if ((gOpenRCT2StartupAction == STARTUP_ACTION_TITLE) && gConfigGeneral.play_intro)
+                if ((gOpenRCT2StartupAction == StartupAction::Title) && gConfigGeneral.play_intro)
                 {
-                    gOpenRCT2StartupAction = STARTUP_ACTION_INTRO;
+                    gOpenRCT2StartupAction = StartupAction::Intro;
                 }
             }
 
             switch (gOpenRCT2StartupAction)
             {
-                case STARTUP_ACTION_INTRO:
-                    gIntroState = INTRO_STATE_PUBLISHER_BEGIN;
+                case StartupAction::Intro:
+                    gIntroState = IntroState::PublisherBegin;
                     title_load();
                     break;
-                case STARTUP_ACTION_TITLE:
+                case StartupAction::Title:
                     title_load();
                     break;
-                case STARTUP_ACTION_OPEN:
+                case StartupAction::Open:
                 {
                     // A path that includes "://" is illegal with all common filesystems, so it is almost certainly a URL
                     // This way all cURL supported protocols, like http, ftp, scp and smb are automatically handled
@@ -823,7 +826,7 @@ namespace OpenRCT2
                     }
                     break;
                 }
-                case STARTUP_ACTION_EDIT:
+                case StartupAction::Edit:
                     if (String::SizeOf(gOpenRCT2StartupActionPath) == 0)
                     {
                         Editor::Load();
@@ -832,6 +835,8 @@ namespace OpenRCT2
                     {
                         title_load();
                     }
+                    break;
+                default:
                     break;
             }
 
@@ -1010,7 +1015,7 @@ namespace OpenRCT2
 
             date_update_real_time_of_day();
 
-            if (gIntroState != INTRO_STATE_NONE)
+            if (gIntroState != IntroState::None)
             {
                 intro_update();
             }
@@ -1030,7 +1035,6 @@ namespace OpenRCT2
             }
 #endif
 
-            Twitch::Update();
             chat_update();
 #ifdef ENABLE_SCRIPTING
             _scriptEngine.Update();
@@ -1439,7 +1443,7 @@ void platform_get_user_directory(utf8* outPath, const utf8* subDirectory, size_t
  * This function is deprecated.
  * Use IPlatformEnvironment instead.
  */
-void platform_get_openrct_data_path(utf8* outPath, size_t outSize)
+void platform_get_openrct2_data_path(utf8* outPath, size_t outSize)
 {
     auto env = GetContext()->GetPlatformEnvironment();
     auto path = env->GetDirectoryPath(DIRBASE::OPENRCT2);

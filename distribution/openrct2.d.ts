@@ -82,6 +82,16 @@ declare global {
     }
 
     /**
+     * A coordinate within the game.
+     * Each in-game tile is a size of 32x32.
+     * The z-coordinate raises 16 per land increment. A full-height wall is 32 in height.
+     * The direction is between 0 and 3.
+     */
+    interface CoordsXYZD extends CoordsXYZ {
+        direction: number;
+    }
+
+    /**
      * A rectangular area specified using two coordinates.
      */
     interface MapRange {
@@ -98,6 +108,7 @@ declare global {
         version: string;
         authors: string | string[];
         type: PluginType;
+        licence: string;
         minApiVersion?: number;
         main: () => void;
     }
@@ -214,6 +225,7 @@ declare global {
         subscribe(hook: "network.join", callback: (e: NetworkEventArgs) => void): IDisposable;
         subscribe(hook: "network.leave", callback: (e: NetworkEventArgs) => void): IDisposable;
         subscribe(hook: "ride.ratings.calculate", callback: (e: RideRatingsCalculateArgs) => void): IDisposable;
+        subscribe(hook: "action.location", callback: (e: ActionLocationArgs) => void): IDisposable;
     }
 
     interface Configuration {
@@ -279,7 +291,7 @@ declare global {
     type HookType =
         "interval.tick" | "interval.day" |
         "network.chat" | "network.action" | "network.join" | "network.leave" |
-        "ride.ratings.calculate";
+        "ride.ratings.calculate" | "action.location";
 
     type ExpenditureType =
         "ride_construction" |
@@ -340,6 +352,15 @@ declare global {
         nausea: number;
     }
 
+    interface ActionLocationArgs {
+        readonly x: number;
+        readonly y: number;
+        readonly player: number;
+        readonly type: number;
+        readonly isClientOnly: boolean;
+        result: boolean;
+    }
+
     /**
      * APIs for the in-game date.
      */
@@ -394,6 +415,8 @@ declare global {
         /** This only exist to retrieve the types for existing corrupt elements. For hiding elements, use the isHidden field instead. */
         | "openrct2_corrupt_deprecated";
 
+    type Direction = 0 | 1 | 2 | 3;
+
     interface BaseTileElement {
         type: TileElementType;
         baseHeight: number;
@@ -428,6 +451,8 @@ declare global {
 
         addition: number | null;
         isAdditionBroken: boolean;
+
+        direction: Direction;
     }
 
     interface TrackElement extends BaseTileElement {
@@ -436,12 +461,14 @@ declare global {
         ride: number;
         station: number;
         hasChainLift: boolean;
+        direction: Direction;
     }
 
     interface SmallSceneryElement extends BaseTileElement {
         object: number;
         primaryColour: number;
         secondaryColour: number;
+        direction: Direction;
     }
 
     interface EntranceElement extends BaseTileElement {
@@ -453,6 +480,7 @@ declare global {
 
     interface WallElement extends BaseTileElement {
         object: number;
+        direction: Direction;
     }
 
     interface LargeSceneryElement extends BaseTileElement {
@@ -648,37 +676,165 @@ declare global {
          * The object metadata for this ride.
          */
         readonly object: RideObject;
+
         /**
          * The unique ID / index of the ride.
          */
         readonly id: number;
+
         /**
          * The type of the ride represented as the internal built-in ride type ID.
          */
         type: number;
+
+        /**
+         * Whether the ride is a ride, shop or facility.
+         */
+        readonly classification: RideClassification;
+
         /**
          * The generated or custom name of the ride.
          */
         name: string;
+
+        /**
+         * Whether the ride is open, closed or testing.
+         */
+        readonly status: RideStatus;
+
+        /**
+         * Various flags related to the operation of the ride.
+         */
+        lifecycleFlags: number;
+
+        /**
+         * The operation mode.
+         */
+        mode: number;
+
+        /**
+         * Flags related to how trains depart.
+         */
+        departFlags: number;
+
+        /**
+         * The minimum time a train will wait at the station before departing.
+         */
+        minimumWaitingTime: number;
+
+        /**
+         * The maximum time a train will wait at the station before departing.
+         */
+        maximumWaitingTime: number;
+
+        /**
+         * The head vehicle IDs associated with the ride, one for each train.
+         */
+        readonly vehicles: number[];
+
+        /**
+         * The colour for each vehicle when the ride opens. Modifying this directly will not
+         * change the colour of any currently running trains nor will it reflect them if they
+         * have been modified.
+         */
+        vehicleColours: VehicleColour[];
+
+        /**
+         * The track colour schemes for the ride.
+         */
+        colourSchemes: TrackColour[];
+
+        /**
+         * The style used for the station, entrance, and exit building.
+         */
+        stationStyle: number;
+
+        /**
+         * The music track to play at each station.
+         */
+        music: number;
+
+        /**
+         * Information about each station.
+         */
+        readonly stations: RideStation[];
+
+        /**
+         * The admission price for the ride and the price of the on-ride photo, or the cost of each item of the stall.
+         */
+        price: number[];
+
         /**
          * The excitement metric of the ride represented as a 2 decimal point fixed integer.
          * For example, `652` equates to `6.52`.
          */
         excitement: number;
+
         /**
          * The intensity metric of the ride represented as a 2 decimal point fixed integer.
          * For example, `652` equates to `6.52`.
          */
         intensity: number;
+
         /**
          * The nausea metric of the ride represented as a 2 decimal point fixed integer.
          * For example, `652` equates to `6.52`.
          */
         nausea: number;
+
         /**
          * The total number of customers the ride has served since it was built.
          */
         totalCustomers: number;
+
+        /**
+         * The date in months when the ride was built.
+         * Subtract this from `date.monthsElapsed` to get the age.
+         */
+        buildDate: number;
+
+        /**
+         * How old the ride is in months.
+         */
+        readonly age: number;
+
+        /**
+         * The running cost of the ride billed every fortnight. Multiply this by 16 to get the cost per hour (~ 1 year).
+         */
+        runningCost: number;
+
+        /**
+         * How often the ride should be inspected by a mechanic.
+         */
+        inspectionInterval: number;
+
+        /**
+         * The value of the ride.
+         */
+        value: number;
+    }
+
+    type RideClassification = "ride" | "stall" | "facility";
+
+    type RideStatus = "closed" | "open" | "testing" | "simulating";
+
+    interface TrackColour {
+        main: number;
+        additional: number;
+        supports: number;
+    }
+
+    interface VehicleColour {
+        body: number;
+        trim: number;
+        ternary: number;
+    }
+
+    interface RideStation {
+        start: CoordsXYZ;
+        length: number;
+        entrance: CoordsXYZD;
+        exit: CoordsXYZD;
     }
 
     type EntityType =
@@ -717,23 +873,156 @@ declare global {
     }
 
     /**
+     * Represents a single car on a ride. A train is made up of multiple cars, but
+     * something like boat hire will be one car per boat.
+     */
+    interface Car extends Entity {
+        /**
+         * The ride this car belongs to.
+         */
+        ride: number;
+
+        /**
+         * The ride object for this car, e.g. the ladybird trains object.
+         */
+        rideObject: number;
+
+        /**
+         * The vehicle type for the ride object used. This is a local index
+         * into the ride object list of vehicle types.
+         */
+        vehicleObject: number;
+
+        spriteType: number;
+
+        /**
+         * How many seats the car has, i.e. the capacity.
+         */
+        numSeats: number;
+
+        /**
+         * The next car on the same train. If this is the last or only car on the train,
+         * this will return null.
+         */
+        nextCarOnTrain: number | null;
+
+        /**
+         * The previous car on the ride. This may be the on the same train or the previous
+         * train. This will point to the last car if this is the first car on the ride.
+         */
+        previousCarOnRide: number;
+
+        /**
+         * The next car on the ride. This may be the on the same train or the next
+         * train. This will point to the first car if this is the last car on the ride.
+         */
+        nextCarOnRide: number;
+
+        /**
+         * The current station the train is in or departing.
+         */
+        currentStation: number;
+
+        /**
+         * How heavy the car is. This is the sum of the mass of the empty car and the
+         * mass of each guest that is riding it.
+         */
+        mass: number;
+
+        /**
+         * How much the car's velocity changes per tick.
+         */
+        acceleration: number;
+
+        /**
+         * How fast the car is moving.
+         */
+        velocity: number;
+
+        /**
+         * The current tilt of the car in the X/Y axis.
+         */
+        bankRotation: number;
+
+        /**
+         * The colour of the car.
+         */
+        colours: VehicleColour;
+
+        /**
+         * The acceleration for vehicles with constant power, e.g.
+         * transport rides and boats.
+         */
+        poweredAcceleration: number;
+
+        /**
+         * The maximum speed for vehicles with constant power, e.g.
+         * transport rides and boats.
+         */
+        poweredMaxSpeed: number;
+
+        /**
+         * Current status of the car or train.
+         */
+        status: VehicleStatus;
+
+        /**
+         * List of peep IDs ordered by seat.
+         */
+        peeps: (number | null)[];
+    }
+
+    type VehicleStatus =
+        "arriving" |
+        "crashed" |
+        "crashing" |
+        "crooked_house_operating" |
+        "departing" |
+        "doing_circus_show" |
+        "ferris_wheel_rotating" |
+        "haunted_house_operating" |
+        "moving_to_end_of_station" |
+        "operating_1a" |
+        "rotating" |
+        "showing_film" |
+        "simulator_operating" |
+        "space_rings_operating" |
+        "starting" |
+        "stopped_by_block_brake" |
+        "stopping_1b" |
+        "stopping" |
+        "swinging" |
+        "top_spin_operating" |
+        "travelling_boat" |
+        "travelling_cable_lift" |
+        "travelling_dodgems" |
+        "travelling" |
+        "unloading_passengers_1c" |
+        "unloading_passengers" |
+        "waiting_for_cable_lift" |
+        "waiting_for_passengers_17" |
+        "waiting_for_passengers" |
+        "waiting_to_depart" |
+        "waiting_to_start";
+
+    /**
      * Represents a guest or staff member.
      */
     interface Peep extends Entity {
+        /**
+         * Whether the peep is a guest or staff member.
+         */
+        peepType: PeepType;
+
         /**
          * Name of the peep.
          */
         name: string;
 
         /**
-         * Colour of the peep's t-shirt.
+         * The peep's direct destination.
          */
-        tshirtColour: number;
-
-        /**
-         * Colour of the peep's trousers.
-         */
-        trousersColour: number;
+        destination: CoordsXY;
 
         /**
          * How tired the guest is between 32 and 128 where lower is more tired.
@@ -744,6 +1033,78 @@ declare global {
          * The target energy value. Energy will increase / decrease slowly towards this value.
          */
         energyTarget: number;
+
+        /**
+         * Gets whether a given flag is set or not.
+         * @param key The flag to test.
+         */
+        getFlag(key: PeepFlags): boolean;
+
+        /**
+         * Sets the given flag to the given value.
+         * @param key The flag to set.
+         * @param value Whether to set or clear the flag.
+         */
+        setFlag(key: PeepFlags, value: boolean): void;
+    }
+
+    type PeepFlags =
+        "leavingPark" |
+        "slowWalk" |
+        "tracking" |
+        "waving" |
+        "hasPaidForParkEntry" |
+        "photo" |
+        "painting" |
+        "wow" |
+        "litter" |
+        "lost" |
+        "hunger" |
+        "toilet" |
+        "crowded" |
+        "happiness" |
+        "nausea" |
+        "purple" |
+        "pizza" |
+        "explode" |
+        "rideShouldBeMarkedAsFavourite" |
+        "parkEntranceChosen" |
+        "contagious" |
+        "joy" |
+        "angry" |
+        "iceCream" |
+        "hereWeAre";
+
+    type PeepType = "guest" | "staff";
+
+    /**
+     * Represents a guest.
+     */
+    interface Guest extends Peep {
+        /**
+         * Colour of the guest's t-shirt.
+         */
+        tshirtColour: number;
+
+        /**
+         * Colour of the guest's trousers.
+         */
+        trousersColour: number;
+
+        /**
+         * Colour of the guest's balloon.
+         */
+        balloonColour: number;
+
+        /**
+         * Colour of the guest's hat.
+         */
+        hatColour: number;
+
+        /**
+         * Colour of the guest's umbrella.
+         */
+        umbrellaColour: number;
 
         /**
          * How happy the guest is between 0 and 255.
@@ -805,6 +1166,33 @@ declare global {
          */
         cash: number;
     }
+
+    /**
+     * Represents a staff member.
+     */
+    interface Staff extends Peep {
+        /**
+         * The type of staff member, e.g. handyman, mechanic.
+         */
+        staffType: StaffType;
+
+        /**
+         * Colour of the staff member. Not applicable for entertainers.
+         */
+        colour: number;
+
+        /**
+         * The entertainer's costume, only applicable for entertainers.
+         */
+        costume: number;
+
+        /**
+         * The enabled jobs the staff can do, e.g. sweep litter, water plants, inspect rides etc.
+         */
+        orders: number;
+    }
+
+    type StaffType = "handyman" | "mechanic" | "security" | "entertainer";
 
     /**
      * Network APIs
@@ -896,7 +1284,34 @@ declare global {
         "attraction" | "peep_on_attraction" | "peep" | "money" | "blank" | "research" | "guests" | "award" | "chart";
 
     interface ParkMessage {
+        /**
+         * Whether the message has been shown and archived.
+         */
+        readonly isArchived: boolean;
+
+        /**
+         * The date this message was posted in total elapsed months.
+         */
+        month: number;
+
+        /**
+         * The day of the month this message was posted.
+         */
+        day: number;
+
+        /**
+         * How old the message is in number of ticks.
+         */
+        tickCount: number;
+
+        /**
+         * The format of the message such as the icon and whether location is enabled.
+         */
         type: ParkMessageType;
+
+        /**
+         * The actual message content.
+         */
         text: string;
 
         /**
@@ -905,6 +1320,17 @@ declare global {
          * Researched item for research.
          */
         subject?: number;
+
+        /**
+         * Removes the message.
+         */
+        remove(): void;
+    }
+
+    interface ParkMessageDesc {
+        type: ParkMessageType;
+        text: string;
+        subject?: number;
     }
 
     interface Park {
@@ -912,9 +1338,11 @@ declare global {
         rating: number;
         bankLoan: number;
         maxBankLoan: number;
+        name: string;
+        messages: ParkMessage[];
 
         postMessage(message: string): void;
-        postMessage(message: ParkMessage): void;
+        postMessage(message: ParkMessageDesc): void;
     }
 
     interface Cheats {
@@ -1101,6 +1529,7 @@ declare global {
          */
         border?: boolean;
         image: number;
+        isPressed: boolean;
         text: string;
         onClick: () => void;
     }

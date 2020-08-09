@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -47,19 +47,19 @@ enum WINDOW_ABOUT_WIDGET_IDX {
 
 #define WIDGETS_MAIN \
     WINDOW_SHIM(WINDOW_TITLE, WW, WH), \
-    { WWT_IMGBTN,           1,  0,              WW - 1,         TABHEIGHT,  WH - 1,     0xFFFFFFFF,                             STR_NONE },             /* page background */ \
-    { WWT_TAB,              1,  3,              93,             17,         TABHEIGHT,  IMAGE_TYPE_REMAP | SPR_TAB_LARGE,       STR_NONE },             /* about OpenRCT2 button */ \
-    { WWT_TAB,              1,  94,             184,            17,         TABHEIGHT,  IMAGE_TYPE_REMAP | SPR_TAB_LARGE,       STR_NONE }              /* about RCT2 button */
+    MakeWidget     ({ 0, TABHEIGHT}, {WW, WH - TABHEIGHT}, WWT_IMGBTN, 1               ), /* page background */       \
+    MakeRemapWidget({ 3,        17}, {91, TABHEIGHT - 16}, WWT_TAB,    1, SPR_TAB_LARGE), /* about OpenRCT2 button */ \
+    MakeRemapWidget({94,        17}, {91, TABHEIGHT - 16}, WWT_TAB,    1, SPR_TAB_LARGE)  /* about RCT2 button */
 
 static rct_widget window_about_openrct2_widgets[] = {
     WIDGETS_MAIN,
-    { WWT_BUTTON,           1,  100,            299,            WH - 50,    WH - 39,    STR_CHANGELOG_ELLIPSIS,                 STR_NONE },             // changelog button
+    MakeWidget({100, WH - TABHEIGHT}, {200, 14}, WWT_BUTTON, 1, STR_CHANGELOG_ELLIPSIS), // changelog button
     { WIDGETS_END }
 };
 
 static rct_widget window_about_rct2_widgets[] = {
     WIDGETS_MAIN,
-    { WWT_BUTTON,           1,  100,            299,            WH - 50,    WH - 39,    STR_MUSIC_ACKNOWLEDGEMENTS_ELLIPSIS,    STR_NONE },             // music credits button
+    MakeWidget({100, WH - TABHEIGHT}, {200, 14}, WWT_BUTTON, 1, STR_MUSIC_ACKNOWLEDGEMENTS_ELLIPSIS), // music credits button
     { WIDGETS_END },
 };
 
@@ -204,7 +204,7 @@ static void window_about_openrct2_common_paint(rct_window* w, rct_drawpixelinfo*
     const auto& aboutOpenRCT2 = w->widgets[WIDX_TAB_ABOUT_OPENRCT2];
     const auto& aboutRCT2 = w->widgets[WIDX_TAB_ABOUT_RCT2];
 
-    int32_t y = w->windowPos.y + ((aboutOpenRCT2.top + aboutOpenRCT2.bottom) / 2) - 3;
+    int32_t y = w->windowPos.y + aboutOpenRCT2.midY() - 3;
     ScreenCoordsXY aboutOpenRCT2Coords(w->windowPos.x + aboutOpenRCT2.left + 45, y);
     ScreenCoordsXY aboutRCT2Coords(w->windowPos.x + aboutRCT2.left + 45, y);
 
@@ -237,7 +237,7 @@ static void window_about_openrct2_paint(rct_window* w, rct_drawpixelinfo* dpi)
         + lineHeight;
 
     logoSize = gfx_get_sprite_size(SPR_G2_LOGO);
-    gfx_draw_sprite(dpi, SPR_G2_LOGO, aboutCoords.x - (logoSize.width / 2), aboutCoords.y, 0);
+    gfx_draw_sprite(dpi, SPR_G2_LOGO, aboutCoords - ScreenCoordsXY{ logoSize.width / 2, 0 }, 0);
     aboutCoords.y += logoSize.height + lineHeight * 2;
 
     // About OpenRCT2 text
@@ -292,38 +292,37 @@ static void window_about_rct2_mouseup(rct_window* w, rct_widgetindex widgetIndex
  */
 static void window_about_rct2_paint(rct_window* w, rct_drawpixelinfo* dpi)
 {
-    int32_t x, y, yPage;
+    int32_t yPage;
 
     window_about_openrct2_common_paint(w, dpi);
 
     yPage = w->windowPos.y + w->widgets[WIDX_PAGE_BACKGROUND].top + 5;
 
-    x = w->windowPos.x + 200;
-    y = yPage + 5;
+    auto screenCoords = ScreenCoordsXY{ w->windowPos.x + 200, yPage + 5 };
 
     int32_t lineHeight = font_get_line_height(gCurrentFontSpriteBase);
 
     // Credits
-    gfx_draw_string_centred(dpi, STR_COPYRIGHT_CS, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight + 74;
-    gfx_draw_string_centred(dpi, STR_DESIGNED_AND_PROGRAMMED_BY_CS, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight;
-    gfx_draw_string_centred(dpi, STR_GRAPHICS_BY_SF, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight;
-    gfx_draw_string_centred(dpi, STR_SOUND_AND_MUSIC_BY_AB, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight;
-    gfx_draw_string_centred(dpi, STR_ADDITIONAL_SOUNDS_RECORDED_BY_DE, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight + 3;
-    gfx_draw_string_centred(dpi, STR_REPRESENTATION_BY_JL, x, y, COLOUR_BLACK, nullptr);
-    y += 2 * lineHeight + 5;
-    gfx_draw_string_centred(dpi, STR_THANKS_TO, x, y, COLOUR_BLACK, nullptr);
-    y += lineHeight;
-    gfx_draw_string_centred(dpi, STR_THANKS_TO_PEOPLE, x, y, COLOUR_BLACK, nullptr);
-    y += 2 * lineHeight + 5;
-    gfx_draw_string_centred(dpi, STR_LICENSED_TO_INFOGRAMES_INTERACTIVE_INC, x, y, COLOUR_BLACK, nullptr);
+    gfx_draw_string_centred(dpi, STR_COPYRIGHT_CS, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight + 74;
+    gfx_draw_string_centred(dpi, STR_DESIGNED_AND_PROGRAMMED_BY_CS, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight;
+    gfx_draw_string_centred(dpi, STR_GRAPHICS_BY_SF, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight;
+    gfx_draw_string_centred(dpi, STR_SOUND_AND_MUSIC_BY_AB, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight;
+    gfx_draw_string_centred(dpi, STR_ADDITIONAL_SOUNDS_RECORDED_BY_DE, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight + 3;
+    gfx_draw_string_centred(dpi, STR_REPRESENTATION_BY_JL, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += 2 * lineHeight + 5;
+    gfx_draw_string_centred(dpi, STR_THANKS_TO, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += lineHeight;
+    gfx_draw_string_centred(dpi, STR_THANKS_TO_PEOPLE, screenCoords, COLOUR_BLACK, nullptr);
+    screenCoords.y += 2 * lineHeight + 5;
+    gfx_draw_string_centred(dpi, STR_LICENSED_TO_INFOGRAMES_INTERACTIVE_INC, screenCoords, COLOUR_BLACK, nullptr);
 
     // Images
-    gfx_draw_sprite(dpi, SPR_CREDITS_CHRIS_SAWYER_SMALL, w->windowPos.x + 92, yPage + 24, 0);
+    gfx_draw_sprite(dpi, SPR_CREDITS_CHRIS_SAWYER_SMALL, { w->windowPos.x + 92, yPage + 24 }, 0);
 
     // Licence
 }

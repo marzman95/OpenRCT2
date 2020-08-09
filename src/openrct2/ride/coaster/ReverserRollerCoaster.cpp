@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -29,8 +29,12 @@ void vehicle_visual_reverser(
     paint_session* session, int32_t x, int32_t imageDirection, int32_t y, int32_t z, const Vehicle* vehicle,
     const rct_ride_entry_vehicle* vehicleEntry)
 {
-    Vehicle* v1 = GET_VEHICLE(vehicle->prev_vehicle_on_ride);
-    Vehicle* v2 = GET_VEHICLE(vehicle->next_vehicle_on_ride);
+    Vehicle* v1 = GetEntity<Vehicle>(vehicle->prev_vehicle_on_ride);
+    Vehicle* v2 = GetEntity<Vehicle>(vehicle->next_vehicle_on_ride);
+    if (v1 == nullptr || v2 == nullptr)
+    {
+        return;
+    }
     x = (v1->x + v2->x) / 2;
     y = (v1->y + v2->y) / 2;
     z = (v1->z + v2->z) / 2;

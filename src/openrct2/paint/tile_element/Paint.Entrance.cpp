@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -44,26 +44,22 @@ static void ride_entrance_exit_paint(paint_session* session, uint8_t direction, 
     {
         if (!is_exit)
         {
-            lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, height + 45, LIGHTFX_LIGHT_TYPE_LANTERN_3);
+            lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, height + 45, LightType::Lantern3);
         }
 
         switch (tile_element->GetDirection())
         {
             case 0:
-                lightfx_add_3d_light_magic_from_drawing_tile(
-                    session->MapPosition, 16, 0, height + 16, LIGHTFX_LIGHT_TYPE_LANTERN_2);
+                lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 16, 0, height + 16, LightType::Lantern2);
                 break;
             case 1:
-                lightfx_add_3d_light_magic_from_drawing_tile(
-                    session->MapPosition, 0, -16, height + 16, LIGHTFX_LIGHT_TYPE_LANTERN_2);
+                lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, -16, height + 16, LightType::Lantern2);
                 break;
             case 2:
-                lightfx_add_3d_light_magic_from_drawing_tile(
-                    session->MapPosition, -16, 0, height + 16, LIGHTFX_LIGHT_TYPE_LANTERN_2);
+                lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, -16, 0, height + 16, LightType::Lantern2);
                 break;
             case 3:
-                lightfx_add_3d_light_magic_from_drawing_tile(
-                    session->MapPosition, 0, 16, height + 16, LIGHTFX_LIGHT_TYPE_LANTERN_2);
+                lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 16, height + 16, LightType::Lantern2);
                 break;
         }
     }
@@ -196,8 +192,8 @@ static void ride_entrance_exit_paint(paint_session* session, uint8_t direction, 
         uint16_t scroll = stringWidth > 0 ? (gCurrentTicks / 2) % stringWidth : 0;
 
         sub_98199C(
-            session, scrolling_text_setup(session, STR_BANNER_TEXT_FORMAT, scroll, stationObj->ScrollingMode, COLOUR_BLACK), 0,
-            0, 0x1C, 0x1C, 0x33, height + stationObj->Height, 2, 2, height + stationObj->Height);
+            session, scrolling_text_setup(session, STR_BANNER_TEXT_FORMAT, ft, scroll, stationObj->ScrollingMode, COLOUR_BLACK),
+            0, 0, 0x1C, 0x1C, 0x33, height + stationObj->Height, 2, 2, height + stationObj->Height);
     }
 
     image_id = entranceImageId;
@@ -225,7 +221,7 @@ static void park_entrance_paint(paint_session* session, uint8_t direction, int32
 #ifdef __ENABLE_LIGHTFX__
     if (lightfx_is_available())
     {
-        lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, 155, LIGHTFX_LIGHT_TYPE_LANTERN_3);
+        lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, 155, LightType::Lantern3);
     }
 #endif
 
@@ -308,7 +304,7 @@ static void park_entrance_paint(paint_session* session, uint8_t direction, int32
                     break;
 
                 int32_t stsetup = scrolling_text_setup(
-                    session, STR_BANNER_TEXT_FORMAT, scroll, entrance->scrolling_mode + direction / 2, COLOUR_BLACK);
+                    session, STR_BANNER_TEXT_FORMAT, ft, scroll, entrance->scrolling_mode + direction / 2, COLOUR_BLACK);
                 int32_t text_height = height + entrance->text_height;
                 sub_98199C(session, stsetup, 0, 0, 0x1C, 0x1C, 0x2F, text_height, 2, 2, text_height);
             }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -53,7 +53,7 @@ namespace Config
         ConfigEnumEntry<int32_t>("GBP", CURRENCY_POUNDS),
         ConfigEnumEntry<int32_t>("USD", CURRENCY_DOLLARS),
         ConfigEnumEntry<int32_t>("FRF", CURRENCY_FRANC),
-        ConfigEnumEntry<int32_t>("DEM", CURRENCY_DEUTSCHMARK),
+        ConfigEnumEntry<int32_t>("DEM", CURRENCY_DEUTSCHE_MARK),
         ConfigEnumEntry<int32_t>("JPY", CURRENCY_YEN),
         ConfigEnumEntry<int32_t>("ESP", CURRENCY_PESETA),
         ConfigEnumEntry<int32_t>("ITL", CURRENCY_LIRA),
@@ -66,12 +66,13 @@ namespace Config
         ConfigEnumEntry<int32_t>("HKD", CURRENCY_HKD),
         ConfigEnumEntry<int32_t>("TWD", CURRENCY_TWD),
         ConfigEnumEntry<int32_t>("CNY", CURRENCY_YUAN),
+        ConfigEnumEntry<int32_t>("HUF", CURRENCY_FORINT),
         ConfigEnumEntry<int32_t>("CUSTOM", CURRENCY_CUSTOM),
     });
 
-    static const auto Enum_CurrencySymbolAffix = ConfigEnum<int32_t>({
-        ConfigEnumEntry<int32_t>("PREFIX", CURRENCY_PREFIX),
-        ConfigEnumEntry<int32_t>("SUFFIX", CURRENCY_SUFFIX),
+    static const auto Enum_CurrencySymbolAffix = ConfigEnum<CurrencyAffix>({
+        ConfigEnumEntry<CurrencyAffix>("PREFIX", CurrencyAffix::Prefix),
+        ConfigEnumEntry<CurrencyAffix>("SUFFIX", CurrencyAffix::Suffix),
     });
 
     static const auto Enum_DateFormat = ConfigEnum<int32_t>({
@@ -87,9 +88,9 @@ namespace Config
         ConfigEnumEntry<int32_t>("OPENGL", DRAWING_ENGINE_OPENGL),
     });
 
-    static const auto Enum_Temperature = ConfigEnum<int32_t>({
-        ConfigEnumEntry<int32_t>("CELSIUS", TEMPERATURE_FORMAT_C),
-        ConfigEnumEntry<int32_t>("FAHRENHEIT", TEMPERATURE_FORMAT_F),
+    static const auto Enum_Temperature = ConfigEnum<TemperatureUnit>({
+        ConfigEnumEntry<TemperatureUnit>("CELSIUS", TemperatureUnit::Celsius),
+        ConfigEnumEntry<TemperatureUnit>("FAHRENHEIT", TemperatureUnit::Fahrenheit),
     });
 
     static const auto Enum_ScaleQuality = ConfigEnum<int32_t>({
@@ -143,8 +144,8 @@ namespace Config
             model->confirmation_prompt = reader->GetBoolean("confirmation_prompt", false);
             model->currency_format = reader->GetEnum<int32_t>("currency_format", platform_get_locale_currency(), Enum_Currency);
             model->custom_currency_rate = reader->GetInt32("custom_currency_rate", 10);
-            model->custom_currency_affix = reader->GetEnum<int32_t>(
-                "custom_currency_affix", CURRENCY_SUFFIX, Enum_CurrencySymbolAffix);
+            model->custom_currency_affix = reader->GetEnum<CurrencyAffix>(
+                "custom_currency_affix", CurrencyAffix::Suffix, Enum_CurrencySymbolAffix);
             model->custom_currency_symbol = reader->GetCString("custom_currency_symbol", "Ctm");
             model->edge_scrolling = reader->GetBoolean("edge_scrolling", true);
             model->edge_scrolling_speed = reader->GetInt32("edge_scrolling_speed", 12);
@@ -161,7 +162,7 @@ namespace Config
             model->save_plugin_data = reader->GetBoolean("save_plugin_data", true);
             model->debugging_tools = reader->GetBoolean("debugging_tools", false);
             model->show_height_as_units = reader->GetBoolean("show_height_as_units", false);
-            model->temperature_format = reader->GetEnum<int32_t>(
+            model->temperature_format = reader->GetEnum<TemperatureUnit>(
                 "temperature_format", platform_get_locale_temperature_format(), Enum_Temperature);
             model->window_height = reader->GetInt32("window_height", -1);
             model->window_snap_proximity = reader->GetInt32("window_snap_proximity", 5);
@@ -225,7 +226,7 @@ namespace Config
         writer->WriteBoolean("confirmation_prompt", model->confirmation_prompt);
         writer->WriteEnum<int32_t>("currency_format", model->currency_format, Enum_Currency);
         writer->WriteInt32("custom_currency_rate", model->custom_currency_rate);
-        writer->WriteEnum<int32_t>("custom_currency_affix", model->custom_currency_affix, Enum_CurrencySymbolAffix);
+        writer->WriteEnum<CurrencyAffix>("custom_currency_affix", model->custom_currency_affix, Enum_CurrencySymbolAffix);
         writer->WriteString("custom_currency_symbol", model->custom_currency_symbol);
         writer->WriteBoolean("edge_scrolling", model->edge_scrolling);
         writer->WriteInt32("edge_scrolling_speed", model->edge_scrolling_speed);
@@ -241,7 +242,7 @@ namespace Config
         writer->WriteBoolean("save_plugin_data", model->save_plugin_data);
         writer->WriteBoolean("debugging_tools", model->debugging_tools);
         writer->WriteBoolean("show_height_as_units", model->show_height_as_units);
-        writer->WriteEnum<int32_t>("temperature_format", model->temperature_format, Enum_Temperature);
+        writer->WriteEnum<TemperatureUnit>("temperature_format", model->temperature_format, Enum_Temperature);
         writer->WriteInt32("window_height", model->window_height);
         writer->WriteInt32("window_snap_proximity", model->window_snap_proximity);
         writer->WriteInt32("window_width", model->window_width);
@@ -386,6 +387,7 @@ namespace Config
             model->default_password = reader->GetString("default_password", "");
             model->stay_connected = reader->GetBoolean("stay_connected", true);
             model->advertise = reader->GetBoolean("advertise", true);
+            model->advertise_address = reader->GetString("advertise_address", "");
             model->maxplayers = reader->GetInt32("maxplayers", 16);
             model->server_name = reader->GetString("server_name", "Server");
             model->server_description = reader->GetString("server_description", "");
@@ -412,6 +414,7 @@ namespace Config
         writer->WriteString("default_password", model->default_password);
         writer->WriteBoolean("stay_connected", model->stay_connected);
         writer->WriteBoolean("advertise", model->advertise);
+        writer->WriteString("advertise_address", model->advertise_address);
         writer->WriteInt32("maxplayers", model->maxplayers);
         writer->WriteString("server_name", model->server_name);
         writer->WriteString("server_description", model->server_description);
@@ -475,34 +478,6 @@ namespace Config
         writer->WriteBoolean("guest_bought_item", model->guest_bought_item);
         writer->WriteBoolean("guest_used_facility", model->guest_used_facility);
         writer->WriteBoolean("guest_died", model->guest_died);
-    }
-
-    static void ReadTwitch(IIniReader* reader)
-    {
-        if (reader->ReadSection("twitch"))
-        {
-            auto model = &gConfigTwitch;
-            model->api_url = reader->GetCString("api_url", nullptr);
-            model->channel = reader->GetCString("channel", nullptr);
-            model->enable_follower_peep_names = reader->GetBoolean("follower_peep_names", true);
-            model->enable_follower_peep_tracking = reader->GetBoolean("follower_peep_tracking", false);
-            model->enable_chat_peep_names = reader->GetBoolean("chat_peep_names", true);
-            model->enable_chat_peep_tracking = reader->GetBoolean("chat_peep_tracking", true);
-            model->enable_news = reader->GetBoolean("news", false);
-        }
-    }
-
-    static void WriteTwitch(IIniWriter* writer)
-    {
-        auto model = &gConfigTwitch;
-        writer->WriteSection("twitch");
-        writer->WriteString("api_url", model->api_url);
-        writer->WriteString("channel", model->channel);
-        writer->WriteBoolean("follower_peep_names", model->enable_follower_peep_names);
-        writer->WriteBoolean("follower_peep_tracking", model->enable_follower_peep_tracking);
-        writer->WriteBoolean("chat_peep_names", model->enable_chat_peep_names);
-        writer->WriteBoolean("chat_peep_tracking", model->enable_chat_peep_tracking);
-        writer->WriteBoolean("news", model->enable_news);
     }
 
     static void ReadFont(IIniReader* reader)
@@ -573,7 +548,6 @@ namespace Config
             ReadSound(reader.get());
             ReadNetwork(reader.get());
             ReadNotifications(reader.get());
-            ReadTwitch(reader.get());
             ReadFont(reader.get());
             ReadPlugin(reader.get());
             return true;
@@ -595,7 +569,6 @@ namespace Config
             ReadSound(reader.get());
             ReadNetwork(reader.get());
             ReadNotifications(reader.get());
-            ReadTwitch(reader.get());
             ReadFont(reader.get());
             ReadPlugin(reader.get());
             return true;
@@ -620,7 +593,6 @@ namespace Config
             WriteSound(writer.get());
             WriteNetwork(writer.get());
             WriteNotifications(writer.get());
-            WriteTwitch(writer.get());
             WriteFont(writer.get());
             WritePlugin(writer.get());
             return true;
@@ -734,7 +706,6 @@ namespace Config
 GeneralConfiguration gConfigGeneral;
 InterfaceConfiguration gConfigInterface;
 SoundConfiguration gConfigSound;
-TwitchConfiguration gConfigTwitch;
 NetworkConfiguration gConfigNetwork;
 NotificationConfiguration gConfigNotifications;
 FontConfiguration gConfigFonts;
@@ -780,8 +751,6 @@ void config_release()
     SafeFree(gConfigInterface.current_theme_preset);
     SafeFree(gConfigInterface.current_title_sequence_preset);
     SafeFree(gConfigSound.device);
-    SafeFree(gConfigTwitch.api_url);
-    SafeFree(gConfigTwitch.channel);
     SafeFree(gConfigFonts.file_name);
     SafeFree(gConfigFonts.font_name);
 }

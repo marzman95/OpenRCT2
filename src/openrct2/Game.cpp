@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -24,6 +24,7 @@
 #include "config/Config.h"
 #include "core/FileScanner.h"
 #include "core/Path.hpp"
+#include "interface/Colour.h"
 #include "interface/Screenshot.h"
 #include "interface/Viewport.h"
 #include "interface/Window.h"
@@ -37,7 +38,7 @@
 #include "object/ObjectList.h"
 #include "peep/Peep.h"
 #include "peep/Staff.h"
-#include "platform/platform.h"
+#include "platform/Platform2.h"
 #include "rct1/RCT1.h"
 #include "ride/Ride.h"
 #include "ride/RideRatings.h"
@@ -166,7 +167,7 @@ void update_palette_effects()
                 paletteOffset[(i * 4) + 1] = -((0xFF - g1->offset[(i * 3) + 1]) / 2) - 1;
                 paletteOffset[(i * 4) + 2] = -((0xFF - g1->offset[(i * 3) + 2]) / 2) - 1;
             }
-            platform_update_palette(gGamePalette, 10, 236);
+            platform_update_palette(gGamePalette, PALETTE_OFFSET_DYNAMIC, PALETTE_LENGTH_DYNAMIC);
         }
         gClimateLightningFlash++;
     }
@@ -222,8 +223,8 @@ void update_palette_effects()
         if (g1 != nullptr)
         {
             uint8_t* vs = &g1->offset[j * 3];
-            uint8_t* vd = &gGamePalette[230 * 4];
-            int32_t n = 5;
+            uint8_t* vd = &gGamePalette[PALETTE_OFFSET_WATER_WAVES * 4];
+            int32_t n = PALETTE_LENGTH_WATER_WAVES;
             for (int32_t i = 0; i < n; i++)
             {
                 vd[0] = vs[0];
@@ -247,8 +248,8 @@ void update_palette_effects()
         if (g1 != nullptr)
         {
             uint8_t* vs = &g1->offset[j * 3];
-            uint8_t* vd = &gGamePalette[235 * 4];
-            int32_t n = 5;
+            uint8_t* vd = &gGamePalette[PALETTE_OFFSET_WATER_SPARKLES * 4];
+            int32_t n = PALETTE_LENGTH_WATER_SPARKLES;
             for (int32_t i = 0; i < n; i++)
             {
                 vd[0] = vs[0];
@@ -269,7 +270,7 @@ void update_palette_effects()
         if (g1 != nullptr)
         {
             uint8_t* vs = &g1->offset[j * 3];
-            uint8_t* vd = &gGamePalette[243 * 4];
+            uint8_t* vd = &gGamePalette[PALETTE_INDEX_243 * 4];
             int32_t n = 3;
             for (int32_t i = 0; i < n; i++)
             {
@@ -285,10 +286,10 @@ void update_palette_effects()
             }
         }
 
-        platform_update_palette(gGamePalette, 230, 16);
+        platform_update_palette(gGamePalette, PALETTE_OFFSET_ANIMATED, PALETTE_LENGTH_ANIMATED);
         if (gClimateLightningFlash == 2)
         {
-            platform_update_palette(gGamePalette, 10, 236);
+            platform_update_palette(gGamePalette, PALETTE_OFFSET_DYNAMIC, PALETTE_LENGTH_DYNAMIC);
             gClimateLightningFlash = 0;
         }
     }
@@ -386,9 +387,9 @@ void game_convert_strings_to_utf8()
 
 void game_convert_news_items_to_utf8()
 {
-    for (int32_t i = 0; i < MAX_NEWS_ITEMS; i++)
+    for (int32_t i = 0; i < News::MaxItems; i++)
     {
-        NewsItem* newsItem = news_item_get(i);
+        News::Item* newsItem = News::GetItem(i);
 
         if (!str_is_null_or_empty(newsItem->Text))
         {
@@ -431,27 +432,29 @@ void game_convert_strings_to_rct2(rct_s6_data* s6)
 void game_fix_save_vars()
 {
     // Recalculates peep count after loading a save to fix corrupted files
-    Peep* peep;
-    uint16_t spriteIndex;
-    uint32_t peepCount = 0;
-    FOR_ALL_GUESTS (spriteIndex, peep)
+    uint32_t guestCount = 0;
     {
-        if (!peep->outside_of_park)
-            peepCount++;
+        for (auto guest : EntityList<Guest>(EntityListId::Peep))
+        {
+            if (!guest->OutsideOfPark)
+            {
+                guestCount++;
+            }
+        }
     }
 
-    gNumGuestsInPark = peepCount;
+    gNumGuestsInPark = guestCount;
 
     // Peeps to remove have to be cached here, as removing them from within the loop breaks iteration
     std::vector<Peep*> peepsToRemove;
 
     // Fix possibly invalid field values
-    FOR_ALL_GUESTS (spriteIndex, peep)
+    for (auto peep : EntityList<Guest>(EntityListId::Peep))
     {
-        if (peep->current_ride_station >= MAX_STATIONS)
+        if (peep->CurrentRideStation >= MAX_STATIONS)
         {
-            const uint8_t srcStation = peep->current_ride_station;
-            const uint8_t rideIdx = peep->current_ride;
+            const auto srcStation = peep->CurrentRideStation;
+            const auto rideIdx = peep->CurrentRide;
             if (rideIdx == RIDE_ID_NULL)
             {
                 continue;
@@ -459,25 +462,26 @@ void game_fix_save_vars()
             Ride* ride = get_ride(rideIdx);
             if (ride == nullptr)
             {
-                log_warning("Couldn't find ride %u, resetting ride on peep %u", rideIdx, spriteIndex);
-                peep->current_ride = RIDE_ID_NULL;
+                log_warning("Couldn't find ride %u, resetting ride on peep %u", rideIdx, peep->sprite_index);
+                peep->CurrentRide = RIDE_ID_NULL;
                 continue;
             }
             auto ft = Formatter::Common();
-            ft.Add<uint32_t>(peep->id);
+            ft.Add<uint32_t>(peep->Id);
             auto curName = peep->GetName();
             log_warning(
-                "Peep %u (%s) has invalid ride station = %u for ride %u.", spriteIndex, curName.c_str(), srcStation, rideIdx);
+                "Peep %u (%s) has invalid ride station = %u for ride %u.", peep->sprite_index, curName.c_str(), srcStation,
+                rideIdx);
             auto station = ride_get_first_valid_station_exit(ride);
             if (station == STATION_INDEX_NULL)
             {
-                log_warning("Couldn't find station, removing peep %u", spriteIndex);
+                log_warning("Couldn't find station, removing peep %u", peep->sprite_index);
                 peepsToRemove.push_back(peep);
             }
             else
             {
                 log_warning("Amending ride station to %u.", station);
-                peep->current_ride_station = station;
+                peep->CurrentRideStation = station;
             }
         }
     }
@@ -613,10 +617,10 @@ void reset_all_sprite_quadrant_placements()
 {
     for (size_t i = 0; i < MAX_SPRITES; i++)
     {
-        rct_sprite* spr = get_sprite(i);
-        if (spr->generic.sprite_identifier != SPRITE_IDENTIFIER_NULL)
+        auto* spr = GetEntity(i);
+        if (spr != nullptr && spr->sprite_identifier != SPRITE_IDENTIFIER_NULL)
         {
-            spr->generic.MoveTo({ spr->generic.x, spr->generic.y, spr->generic.z });
+            spr->MoveTo({ spr->x, spr->y, spr->z });
         }
     }
 }
@@ -680,21 +684,12 @@ void save_game_as()
     delete intent;
 }
 
-static int32_t compare_autosave_file_paths(const void* a, const void* b)
-{
-    // TODO: CAST-IMPROVEMENT-NEEDED
-    return strcmp(*(char**)a, *(char**)b);
-}
-
 static void limit_autosave_count(const size_t numberOfFilesToKeep, bool processLandscapeFolder)
 {
     size_t autosavesCount = 0;
     size_t numAutosavesToDelete = 0;
 
     utf8 filter[MAX_PATH];
-
-    utf8** autosaveFiles = nullptr;
-
     if (processLandscapeFolder)
     {
         platform_get_user_directory(filter, "landscape", sizeof(filter));
@@ -723,47 +718,39 @@ static void limit_autosave_count(const size_t numberOfFilesToKeep, bool processL
         return;
     }
 
-    autosaveFiles = static_cast<utf8**>(malloc(sizeof(utf8*) * autosavesCount));
-
+    auto autosaveFiles = std::vector<std::string>(autosavesCount);
     {
         auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(filter, false));
         for (size_t i = 0; i < autosavesCount; i++)
         {
-            autosaveFiles[i] = static_cast<utf8*>(malloc(sizeof(utf8) * MAX_PATH));
-            std::memset(autosaveFiles[i], 0, sizeof(utf8) * MAX_PATH);
-
+            autosaveFiles[i].resize(MAX_PATH, 0);
             if (scanner->Next())
             {
                 if (processLandscapeFolder)
                 {
-                    platform_get_user_directory(autosaveFiles[i], "landscape", sizeof(utf8) * MAX_PATH);
+                    platform_get_user_directory(autosaveFiles[i].data(), "landscape", sizeof(utf8) * MAX_PATH);
                 }
                 else
                 {
-                    platform_get_user_directory(autosaveFiles[i], "save", sizeof(utf8) * MAX_PATH);
+                    platform_get_user_directory(autosaveFiles[i].data(), "save", sizeof(utf8) * MAX_PATH);
                 }
-                safe_strcat_path(autosaveFiles[i], "autosave", sizeof(utf8) * MAX_PATH);
-                safe_strcat_path(autosaveFiles[i], scanner->GetPathRelative(), sizeof(utf8) * MAX_PATH);
+                safe_strcat_path(autosaveFiles[i].data(), "autosave", sizeof(utf8) * MAX_PATH);
+                safe_strcat_path(autosaveFiles[i].data(), scanner->GetPathRelative(), sizeof(utf8) * MAX_PATH);
             }
         }
     }
 
-    qsort(autosaveFiles, autosavesCount, sizeof(char*), compare_autosave_file_paths);
+    std::sort(autosaveFiles.begin(), autosaveFiles.end(), [](const auto& saveFile0, const auto& saveFile1) {
+        return saveFile0.compare(saveFile1) < 0;
+    });
 
     // Calculate how many saves we need to delete.
     numAutosavesToDelete = autosavesCount - numberOfFilesToKeep;
 
     for (size_t i = 0; numAutosavesToDelete > 0; i++, numAutosavesToDelete--)
     {
-        platform_file_delete(autosaveFiles[i]);
+        platform_file_delete(autosaveFiles[i].data());
     }
-
-    for (size_t i = 0; i < autosavesCount; i++)
-    {
-        free(autosaveFiles[i]);
-    }
-
-    free(autosaveFiles);
 }
 
 void game_autosave()
@@ -779,10 +766,8 @@ void game_autosave()
     }
 
     // Retrieve current time
-    rct2_date currentDate;
-    platform_get_date_local(&currentDate);
-    rct2_time currentTime;
-    platform_get_time_local(&currentTime);
+    auto currentDate = Platform::GetDateLocal();
+    auto currentTime = Platform::GetTimeLocal();
 
     utf8 timeName[44];
     snprintf(
@@ -803,7 +788,7 @@ void game_autosave()
     safe_strcat(backupPath, fileExtension, sizeof(backupPath));
     safe_strcat(backupPath, ".bak", sizeof(backupPath));
 
-    if (platform_file_exists(path))
+    if (Platform::FileExists(path))
     {
         platform_file_copy(path, backupPath, true);
     }

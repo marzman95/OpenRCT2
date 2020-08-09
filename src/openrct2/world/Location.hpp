@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -218,6 +218,49 @@ struct CoordsXY
     }
 };
 
+struct CoordsXYZ : public CoordsXY
+{
+    int32_t z = 0;
+
+    CoordsXYZ() = default;
+    constexpr CoordsXYZ(int32_t _x, int32_t _y, int32_t _z)
+        : CoordsXY(_x, _y)
+        , z(_z)
+    {
+    }
+
+    constexpr CoordsXYZ(const CoordsXY& c, int32_t _z)
+        : CoordsXY(c)
+        , z(_z)
+    {
+    }
+
+    const CoordsXYZ operator+(const CoordsXYZ& rhs) const
+    {
+        return { x + rhs.x, y + rhs.y, z + rhs.z };
+    }
+
+    const CoordsXYZ operator-(const CoordsXYZ& rhs) const
+    {
+        return { x - rhs.x, y - rhs.y, z - rhs.z };
+    }
+
+    bool operator==(const CoordsXYZ& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    CoordsXYZ ToTileStart() const
+    {
+        return { floor2(x, COORDS_XY_STEP), floor2(y, COORDS_XY_STEP), z };
+    }
+
+    CoordsXYZ ToTileCentre() const
+    {
+        return ToTileStart() + CoordsXYZ{ COORDS_XY_HALF_TILE, COORDS_XY_HALF_TILE, 0 };
+    }
+};
+
 struct CoordsXYRangedZ : public CoordsXY
 {
     int32_t baseZ = 0;
@@ -234,6 +277,13 @@ struct CoordsXYRangedZ : public CoordsXY
     constexpr CoordsXYRangedZ(const CoordsXY& _c, int32_t _baseZ, int32_t _clearanceZ)
         : CoordsXY(_c)
         , baseZ(_baseZ)
+        , clearanceZ(_clearanceZ)
+    {
+    }
+
+    constexpr CoordsXYRangedZ(const CoordsXYZ& _c, int32_t _clearanceZ)
+        : CoordsXY(_c)
+        , baseZ(_c.z)
         , clearanceZ(_clearanceZ)
     {
     }
@@ -334,49 +384,6 @@ struct TileCoordsXY
     {
         x = COORDS_NULL;
         y = 0;
-    }
-};
-
-struct CoordsXYZ : public CoordsXY
-{
-    int32_t z = 0;
-
-    CoordsXYZ() = default;
-    constexpr CoordsXYZ(int32_t _x, int32_t _y, int32_t _z)
-        : CoordsXY(_x, _y)
-        , z(_z)
-    {
-    }
-
-    constexpr CoordsXYZ(const CoordsXY& c, int32_t _z)
-        : CoordsXY(c)
-        , z(_z)
-    {
-    }
-
-    const CoordsXYZ operator+(const CoordsXYZ& rhs) const
-    {
-        return { x + rhs.x, y + rhs.y, z + rhs.z };
-    }
-
-    const CoordsXYZ operator-(const CoordsXYZ& rhs) const
-    {
-        return { x - rhs.x, y - rhs.y, z - rhs.z };
-    }
-
-    bool operator==(const CoordsXYZ& other) const
-    {
-        return x == other.x && y == other.y && z == other.z;
-    }
-
-    CoordsXYZ ToTileStart() const
-    {
-        return { floor2(x, COORDS_XY_STEP), floor2(y, COORDS_XY_STEP), z };
-    }
-
-    CoordsXYZ ToTileCentre() const
-    {
-        return ToTileStart() + CoordsXYZ{ COORDS_XY_HALF_TILE, COORDS_XY_HALF_TILE, 0 };
     }
 };
 
@@ -546,6 +553,11 @@ struct CoordsXYZD : public CoordsXYZ
         return { x + rhs.x, y + rhs.y, z + rhs.z, direction };
     }
 
+    const CoordsXYZD operator-(const CoordsXY& rhs) const
+    {
+        return { x - rhs.x, y - rhs.y, z, direction };
+    }
+
     const CoordsXYZD operator-(const CoordsXYZ& rhs) const
     {
         return { x - rhs.x, y - rhs.y, z - rhs.z, direction };
@@ -610,39 +622,82 @@ struct TileCoordsXYZD : public TileCoordsXYZ
 };
 
 /**
- * Represents a rectangular range of the map using regular coordinates (32 per tile).
+ * Represents a range of the map using regular coordinates.
  */
-struct MapRange
+template<class T> struct CoordsRange
 {
-    CoordsXY LeftTop;
-    CoordsXY RightBottom;
+    T Point1{ 0, 0 };
+    T Point2{ 0, 0 };
+
+    int32_t GetX1() const
+    {
+        return Point1.x;
+    }
+    int32_t GetY1() const
+    {
+        return Point1.y;
+    }
+    int32_t GetX2() const
+    {
+        return Point2.x;
+    }
+    int32_t GetY2() const
+    {
+        return Point2.y;
+    }
+
+    CoordsRange() = default;
+    CoordsRange(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
+        : CoordsRange({ x1, y1 }, { x2, y2 })
+    {
+    }
+
+    CoordsRange(const T& pointOne, const T& pointTwo)
+        : Point1(pointOne)
+        , Point2(pointTwo)
+    {
+    }
+};
+
+template<class T> struct RectRange : public CoordsRange<T>
+{
+    using CoordsRange<T>::CoordsRange;
 
     int32_t GetLeft() const
     {
-        return LeftTop.x;
+        return CoordsRange<T>::GetX1();
     }
     int32_t GetTop() const
     {
-        return LeftTop.y;
+        return CoordsRange<T>::GetY1();
     }
     int32_t GetRight() const
     {
-        return RightBottom.x;
+        return CoordsRange<T>::GetX2();
     }
     int32_t GetBottom() const
     {
-        return RightBottom.y;
+        return CoordsRange<T>::GetY2();
     }
 
-    MapRange()
-        : MapRange(0, 0, 0, 0)
+    RectRange(int32_t left, int32_t top, int32_t right, int32_t bottom)
+        : RectRange({ left, top }, { right, bottom })
     {
     }
-    MapRange(int32_t left, int32_t top, int32_t right, int32_t bottom)
-        : LeftTop(left, top)
-        , RightBottom(right, bottom)
+
+    RectRange(const T& leftTop, const T& rightBottom)
+        : CoordsRange<T>(leftTop, rightBottom)
     {
     }
+};
+
+/**
+ * Represents a rectangular range of the map using regular coordinates (32 per tile).
+ */
+
+struct MapRange : public RectRange<CoordsXY>
+{
+    using RectRange::RectRange;
 
     MapRange Normalise() const
     {
@@ -650,5 +705,39 @@ struct MapRange
             std::min(GetLeft(), GetRight()), std::min(GetTop(), GetBottom()), std::max(GetLeft(), GetRight()),
             std::max(GetTop(), GetBottom()));
         return result;
+    }
+};
+
+/**
+ * Represents a line on the screen
+ */
+
+struct ScreenLine : public CoordsRange<ScreenCoordsXY>
+{
+    ScreenLine(const ScreenCoordsXY& leftTop, const ScreenCoordsXY& rightBottom)
+        : CoordsRange<ScreenCoordsXY>(leftTop, rightBottom)
+    {
+    }
+};
+
+/**
+ * Represents a rectangular range on the screen
+ */
+
+struct ScreenRect : public RectRange<ScreenCoordsXY>
+{
+    using RectRange::RectRange;
+
+    int32_t GetWidth() const
+    {
+        return GetRight() - GetLeft();
+    }
+    int32_t GetHeight() const
+    {
+        return GetBottom() - GetTop();
+    }
+    bool Contains(const ScreenCoordsXY& coords) const
+    {
+        return coords.x >= GetLeft() && coords.x <= GetRight() && coords.y >= GetTop() && coords.y <= GetBottom();
     }
 };

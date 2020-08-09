@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2018 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -37,7 +37,7 @@ class InteractiveConsole;
 
 namespace OpenRCT2
 {
-    interface IPlatformEnvironment;
+    struct IPlatformEnvironment;
 }
 
 namespace OpenRCT2::Scripting
@@ -201,7 +201,6 @@ namespace OpenRCT2::Scripting
         void RemoveCustomGameActions(const std::shared_ptr<Plugin>& plugin);
         std::unique_ptr<GameActionResult> DukToGameActionResult(const DukValue& d);
         DukValue GameActionResultToDuk(const GameAction& action, const std::unique_ptr<GameActionResult>& result);
-        DukValue PositionToDuk(const CoordsXYZ& position);
         static std::string_view ExpenditureTypeToString(ExpenditureType expenditureType);
         static ExpenditureType StringToExpenditureType(const std::string_view& expenditureType);
 

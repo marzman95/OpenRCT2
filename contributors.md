@@ -5,7 +5,7 @@ Includes all git commit authors. Aliases are GitHub user names.
 * Ted John (IntelOrca) - Owner
 * Duncan Frost (duncanspumpkin)
 * Michael Steenbeek (Gymnasiast) - translation management
-* Michał Janiszewski (janisozaur) - CI, Linux management
+* Michał Janiszewski (janisozaur)
 * Hielke Morsink (Broxzier)
 * Aaron van Geffen (AaronVanGeffen)
 * Matthias Moninger (ZehMatt)
@@ -50,7 +50,7 @@ The following people are not part of the development team, but have been contrib
 * (atmaxinger) - User configuration
 * (anyc) - Housecleaning, cross-platform fixes
 * Michael Steenbeek (Gymnasiast) - Cheats, RCT1 ride style, misc.
-* Miso Zmiric (mzmiric5) - Twitch integration, misc.
+* Miso Zmiric (mzmiric5) - Old Twitch integration, misc.
 * Inseok Lee (dlunch) - Load save files from command line
 * Jørn Lomax (jvlomax) - Configuration parser
 * Alexander Overvoorde (Overv) - OpenGL improvements, Steam overlay detection, various bugfixes.
@@ -87,6 +87,8 @@ The following people are not part of the development team, but have been contrib
 * Chad Ian Anderson (pizza2004) - Added New Game option, bug fixes, misc.
 * Peter Ryszkiewicz (pRizz) - Added horizontal grid lines to finance charts.
 * Hudson Oliveira (hdpoliveira) - Misc.
+* Jim Verheijde (Jimver) - Make handymen less likely to get stuck in queue lines, misc.
+* Helio Batimarqui (batimarqui) - Misc.
 
 ## Bug fixes
 * (halfbro)
@@ -142,6 +144,14 @@ The following people are not part of the development team, but have been contrib
 * Tomáš Žilínek (TomasZilinek)
 * Mustapha Elghoul (mustaphaelghoul)
 * Tyler Leamon (tylerleamon)
+* Michael Coates (outerwear)
+* Reid Baris (Rdbaris)
+* Deanna Baris (dbaris)
+* Chaitanya Thengdi (chaitanyathengdi)
+* Sidney Kuyateh (autinerd)
+* Łukasz Pękalski (Lukasz-Pe)
+* (quale)
+* Arran Ireland (ion232)
 
 ## Toolchain
 * (Balletie) - macOS
@@ -174,6 +184,7 @@ The following people are not part of the development team, but have been contrib
 * Chinese (Simplified) - Naiji Ma (naijim), (izhangfei), Eric Zhao (sczyh30), (Muhhan)
 * Chinese (Traditional) - Harry Lam (daihakken)
 * Czech - Martin Černáč (octaroot), (Clonewayx), Tomáš Pazdiora (Aroidzap)
+* Danish - Lars P. Sørensen (LPSGizmo)
 * Dutch - Michael Steenbeek (Gymnasiast), Yannic Geurts (xzbobzx), (mrtnptrs), Thomas den Hollander (ThomasdenH), (hostbrute),  Marijn van der Werf (marijnvdwerf), Tom Kroes (ThePsionic); reviewing and discussion: Aaron van Geffen (AaronVanGeffen), (Balletie) and Sijmen Schoon (SijmenSchoon).
 * Finnish - (DJHasis), (Zode), (TheWing)
 * French - (fbourigault), Joël Troch (JoelTroch), Michael Steenbeek (Gymnasiast), Romain Vigier (rvgr),  (AziasYur), Hugo Courtial (s0r00t), David Delobel (incyclum), Nicolas Hawrysh (xp4xbox)

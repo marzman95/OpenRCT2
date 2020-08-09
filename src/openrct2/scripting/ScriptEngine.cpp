@@ -380,15 +380,20 @@ void ScriptEngine::Initialise()
     ScObject::Register(ctx);
     ScSmallSceneryObject::Register(ctx);
     ScPark::Register(ctx);
+    ScParkMessage::Register(ctx);
     ScPlayer::Register(ctx);
     ScPlayerGroup::Register(ctx);
     ScRide::Register(ctx);
+    ScRideStation::Register(ctx);
     ScRideObject::Register(ctx);
     ScRideObjectVehicle::Register(ctx);
     ScTile::Register(ctx);
     ScTileElement::Register(ctx);
     ScEntity::Register(ctx);
+    ScVehicle::Register(ctx);
     ScPeep::Register(ctx);
+    ScGuest::Register(ctx);
+    ScStaff::Register(ctx);
 
     dukglue_register_global(ctx, std::make_shared<ScCheats>(), "cheats");
     dukglue_register_global(ctx, std::make_shared<ScConsole>(_console), "console");
@@ -772,20 +777,6 @@ std::unique_ptr<GameActionResult> ScriptEngine::DukToGameActionResult(const DukV
     return result;
 }
 
-DukValue ScriptEngine::PositionToDuk(const CoordsXYZ& position)
-{
-    DukStackFrame frame(_context);
-    duk_context* ctx = _context;
-    auto obj = duk_push_object(ctx);
-    duk_push_int(ctx, position.x);
-    duk_put_prop_string(ctx, obj, "x");
-    duk_push_int(ctx, position.y);
-    duk_put_prop_string(ctx, obj, "y");
-    duk_push_int(ctx, position.z);
-    duk_put_prop_string(ctx, obj, "z");
-    return DukValue::take_from_stack(ctx);
-}
-
 constexpr static const char* ExpenditureTypes[] = {
     "ride_construction",
     "ride_runningcosts",
@@ -839,7 +830,7 @@ DukValue ScriptEngine::GameActionResultToDuk(const GameAction& action, const std
     }
     if (!result->Position.isNull())
     {
-        obj.Set("position", PositionToDuk(result->Position));
+        obj.Set("position", ToDuk(_context, result->Position));
     }
 
     if (result->Expenditure != ExpenditureType::Count)
@@ -1105,7 +1096,8 @@ void ScriptEngine::LoadSharedStorage()
         if (File::Exists(path))
         {
             auto data = File::ReadAllBytes(path);
-            auto result = DuktapeTryParseJson(_context, std::string_view((const char*)data.data(), data.size()));
+            auto result = DuktapeTryParseJson(
+                _context, std::string_view(reinterpret_cast<const char*>(data.data()), data.size()));
             if (result)
             {
                 _sharedStorage = std::move(*result);

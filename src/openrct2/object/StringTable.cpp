@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -47,7 +47,7 @@ static bool StringIsBlank(const utf8* str)
     return true;
 }
 
-void StringTable::Read(IReadObjectContext* context, IStream* stream, uint8_t id)
+void StringTable::Read(IReadObjectContext* context, OpenRCT2::IStream* stream, uint8_t id)
 {
     try
     {

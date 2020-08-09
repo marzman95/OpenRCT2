@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -72,7 +72,7 @@ namespace OpenRCT2
         uint32_t magic;
         uint16_t version;
         uint64_t uncompressedSize;
-        MemoryStream data;
+        OpenRCT2::MemoryStream data;
     };
 
     struct ReplayRecordData
@@ -80,9 +80,9 @@ namespace OpenRCT2
         uint32_t magic;
         uint16_t version;
         std::string networkId;
-        MemoryStream parkData;
-        MemoryStream parkParams;
-        MemoryStream cheatData;
+        OpenRCT2::MemoryStream parkData;
+        OpenRCT2::MemoryStream parkParams;
+        OpenRCT2::MemoryStream cheatData;
         std::string name;      // Name of play
         std::string filePath;  // File path of replay.
         uint64_t timeRecorded; // Posix Time.
@@ -91,7 +91,7 @@ namespace OpenRCT2
         std::multiset<ReplayCommand> commands;
         std::vector<std::pair<uint32_t, rct_sprite_checksum>> checksums;
         uint32_t checksumIndex;
-        MemoryStream gameStateSnapshots;
+        OpenRCT2::MemoryStream gameStateSnapshots;
     };
 
     class ReplayManager final : public IReplayManager
@@ -339,8 +339,8 @@ namespace OpenRCT2
 
             _currentRecording.reset();
 
-            NewsItem* news = news_item_add_to_queue_raw(NEWS_ITEM_BLANK, "Replay recording stopped", 0);
-            news->Flags |= NEWS_FLAG_HAS_BUTTON; // Has no subject.
+            News::Item* news = News::AddItemToQueue(News::ItemType::Blank, "Replay recording stopped", 0);
+            news->SetFlags(News::ItemFlags::HasButton); // Has no subject.
 
             return result;
         }
@@ -467,8 +467,8 @@ namespace OpenRCT2
             // During normal playback we pause the game if stopped.
             if (_mode == ReplayMode::PLAYING)
             {
-                NewsItem* news = news_item_add_to_queue_raw(NEWS_ITEM_BLANK, "Replay playback complete", 0);
-                news->Flags |= NEWS_FLAG_HAS_BUTTON; // Has no subject.
+                News::Item* news = News::AddItemToQueue(News::ItemType::Blank, "Replay playback complete", 0);
+                news->SetFlags(News::ItemFlags::HasButton); // Has no subject.
             }
 
             // When normalizing the output we don't touch the mode.
@@ -858,7 +858,7 @@ namespace OpenRCT2
                 {
                     auto* mainWindow = window_get_main();
                     if (mainWindow != nullptr)
-                        window_scroll_to_location(mainWindow, result->Position.x, result->Position.y, result->Position.z);
+                        window_scroll_to_location(mainWindow, result->Position);
                 }
 
                 replayQueue.erase(replayQueue.begin());

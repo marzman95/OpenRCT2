@@ -74,7 +74,7 @@ class ObjectFileIndex final : public FileIndex<ObjectRepositoryItem>
 {
 private:
     static constexpr uint32_t MAGIC_NUMBER = 0x5844494F; // OIDX
-    static constexpr uint16_t VERSION = 19;
+    static constexpr uint16_t VERSION = 21;
     static constexpr auto PATTERN = "*.dat;*.pob;*.json;*.parkobj";
 
     IObjectRepository& _objectRepository;
@@ -114,6 +114,7 @@ public:
             item.ObjectEntry = *object->GetObjectEntry();
             item.Path = path;
             item.Name = object->GetName();
+            item.Authors = object->GetAuthors();
             item.Sources = object->GetSourceGames();
             object->SetRepositoryItem(&item);
             delete object;
@@ -128,11 +129,19 @@ protected:
         stream->WriteValue(item.ObjectEntry);
         stream->WriteString(item.Path);
         stream->WriteString(item.Name);
+
         uint8_t sourceLength = static_cast<uint8_t>(item.Sources.size());
         stream->WriteValue(sourceLength);
         for (auto source : item.Sources)
         {
             stream->WriteValue(source);
+        }
+
+        uint8_t authorsLength = static_cast<uint8_t>(item.Authors.size());
+        stream->WriteValue(authorsLength);
+        for (const auto& author : item.Authors)
+        {
+            stream->WriteString(author);
         }
 
         switch (item.ObjectEntry.GetType())
@@ -147,7 +156,6 @@ protected:
                 {
                     stream->WriteValue<uint8_t>(item.RideInfo.RideType[i]);
                 }
-                stream->WriteValue<uint8_t>(item.RideInfo.RideGroupIndex);
                 break;
             case OBJECT_TYPE_SCENERY_GROUP:
                 stream->WriteValue<uint16_t>(static_cast<uint16_t>(item.SceneryGroupInfo.Entries.size()));
@@ -166,11 +174,19 @@ protected:
         item.ObjectEntry = stream->ReadValue<rct_object_entry>();
         item.Path = stream->ReadStdString();
         item.Name = stream->ReadStdString();
+
         auto sourceLength = stream->ReadValue<uint8_t>();
         for (size_t i = 0; i < sourceLength; i++)
         {
             auto value = stream->ReadValue<uint8_t>();
             item.Sources.push_back(value);
+        }
+
+        auto authorsLength = stream->ReadValue<uint8_t>();
+        for (size_t i = 0; i < authorsLength; i++)
+        {
+            auto author = stream->ReadStdString();
+            item.Authors.emplace_back(author);
         }
 
         switch (item.ObjectEntry.GetType())
@@ -185,7 +201,6 @@ protected:
                 {
                     item.RideInfo.RideType[i] = stream->ReadValue<uint8_t>();
                 }
-                item.RideInfo.RideGroupIndex = stream->ReadValue<uint8_t>();
                 break;
             case OBJECT_TYPE_SCENERY_GROUP:
             {
@@ -523,7 +538,8 @@ private:
         chunkHeader.encoding = object_entry_group_encoding[objectType];
         chunkHeader.length = static_cast<uint32_t>(dataSize);
         uint8_t* encodedDataBuffer = Memory::Allocate<uint8_t>(0x600000);
-        size_t encodedDataSize = sawyercoding_write_chunk_buffer(encodedDataBuffer, (uint8_t*)data, chunkHeader);
+        size_t encodedDataSize = sawyercoding_write_chunk_buffer(
+            encodedDataBuffer, reinterpret_cast<const uint8_t*>(data), chunkHeader);
 
         // Save to file
         try
@@ -612,7 +628,7 @@ private:
         return String::Convert(normalisedName, CODE_PAGE::CP_1252, CODE_PAGE::CP_UTF8);
     }
 
-    void WritePackedObject(IStream* stream, const rct_object_entry* entry)
+    void WritePackedObject(OpenRCT2::IStream* stream, const rct_object_entry* entry)
     {
         const ObjectRepositoryItem* item = FindObject(entry);
         if (item == nullptr)
@@ -621,7 +637,7 @@ private:
         }
 
         // Read object data from file
-        auto fs = FileStream(item->Path, FILE_MODE_OPEN);
+        auto fs = OpenRCT2::FileStream(item->Path, OpenRCT2::FILE_MODE_OPEN);
         auto fileEntry = fs.ReadValue<rct_object_entry>();
         if (!object_entry_compare(entry, &fileEntry))
         {
@@ -691,7 +707,7 @@ void* object_repository_load_object(const rct_object_entry* objectEntry)
             object->Load();
         }
     }
-    return (void*)object;
+    return static_cast<void*>(object);
 }
 
 void scenario_translate(scenario_index_entry* scenarioEntry)
@@ -786,7 +802,7 @@ bool object_entry_compare(const rct_object_entry* a, const rct_object_entry* b)
 
 int32_t object_calculate_checksum(const rct_object_entry* entry, const void* data, size_t dataLength)
 {
-    const uint8_t* entryBytePtr = (uint8_t*)entry;
+    const uint8_t* entryBytePtr = reinterpret_cast<const uint8_t*>(entry);
 
     uint32_t checksum = 0xF369A75B;
     checksum ^= entryBytePtr[0];
@@ -797,7 +813,7 @@ int32_t object_calculate_checksum(const rct_object_entry* entry, const void* dat
         checksum = rol32(checksum, 11);
     }
 
-    uint8_t* dataBytes = (uint8_t*)data;
+    const uint8_t* dataBytes = reinterpret_cast<const uint8_t*>(data);
     const size_t dataLength32 = dataLength - (dataLength & 31);
     for (size_t i = 0; i < 32; i++)
     {

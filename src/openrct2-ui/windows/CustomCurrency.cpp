@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -35,10 +35,10 @@ enum WINDOW_CUSTOM_CURRENCY_WIDGET_IDX {
 
 static rct_widget window_custom_currency_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-      SPINNER_WIDGETS      (1,  100,    200,    30,     40, STR_CHEAT_CURRENCY_FORMAT,          STR_NONE), // NB: 3 widgets
-    { WWT_BUTTON,           1,  120,    200,    50,     60, 0,                                  STR_NONE },
-    { WWT_DROPDOWN,         1,  220,    350,    50,     60, STR_NONE,                           STR_NONE },
-    { WWT_BUTTON,           1,  339,    349,    51,     59, STR_DROPDOWN_GLYPH,                 STR_NONE },
+    MakeSpinnerWidgets({100, 30}, {101, 11}, WWT_SPINNER,  1, STR_CHEAT_CURRENCY_FORMAT), // NB: 3 widgets
+    MakeWidget        ({120, 50}, { 81, 11}, WWT_BUTTON,   1, STR_EMPTY                ),
+    MakeWidget        ({220, 50}, {131, 11}, WWT_DROPDOWN, 1                           ),
+    MakeWidget        ({339, 51}, { 11,  9}, WWT_BUTTON,   1, STR_DROPDOWN_GLYPH       ),
     { WIDGETS_END },
 };
 
@@ -140,10 +140,10 @@ static void custom_currency_window_mousedown(rct_window* w, rct_widgetindex widg
             gDropdownItemsArgs[1] = STR_SUFFIX;
 
             window_dropdown_show_text_custom_width(
-                { w->windowPos.x + widget->left, w->windowPos.y + widget->top }, widget->bottom - widget->top + 1,
-                w->colours[1], 0, DROPDOWN_FLAG_STAY_OPEN, 2, widget->right - widget->left - 3);
+                { w->windowPos.x + widget->left, w->windowPos.y + widget->top }, widget->height() + 1, w->colours[1], 0,
+                DROPDOWN_FLAG_STAY_OPEN, 2, widget->width() - 3);
 
-            if (CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode == CURRENCY_PREFIX)
+            if (CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode == CurrencyAffix::Prefix)
             {
                 dropdown_set_checked(0, true);
             }
@@ -183,13 +183,13 @@ static void custom_currency_window_dropdown([[maybe_unused]] rct_window* w, rct_
     {
         if (dropdownIndex == 0)
         {
-            CurrencyDescriptors[CURRENCY_CUSTOM].affix_ascii = CURRENCY_PREFIX;
-            CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode = CURRENCY_PREFIX;
+            CurrencyDescriptors[CURRENCY_CUSTOM].affix_ascii = CurrencyAffix::Prefix;
+            CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode = CurrencyAffix::Prefix;
         }
         else if (dropdownIndex == 1)
         {
-            CurrencyDescriptors[CURRENCY_CUSTOM].affix_ascii = CURRENCY_SUFFIX;
-            CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode = CURRENCY_SUFFIX;
+            CurrencyDescriptors[CURRENCY_CUSTOM].affix_ascii = CurrencyAffix::Suffix;
+            CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode = CurrencyAffix::Suffix;
         }
 
         gConfigGeneral.custom_currency_affix = CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode;
@@ -238,35 +238,40 @@ static void custom_currency_window_paint(rct_window* w, rct_drawpixelinfo* dpi)
 
     window_draw_widgets(w, dpi);
 
-    auto screenCoords = ScreenCoordsXY{ w->windowPos.x + 10, w->windowPos.y + 30 };
+    auto screenCoords = w->windowPos + ScreenCoordsXY{ 10, 30 };
 
-    gfx_draw_string_left(dpi, STR_RATE, nullptr, w->colours[1], screenCoords.x, screenCoords.y);
+    gfx_draw_string_left(dpi, STR_RATE, nullptr, w->colours[1], screenCoords);
 
     int32_t baseExchange = CurrencyDescriptors[CURRENCY_POUNDS].rate;
     ft = Formatter::Common();
     ft.Add<int32_t>(baseExchange);
     gfx_draw_string_left(
-        dpi, STR_CUSTOM_CURRENCY_EQUIVALENCY, gCommonFormatArgs, w->colours[1], screenCoords.x + 200, screenCoords.y);
+        dpi, STR_CUSTOM_CURRENCY_EQUIVALENCY, gCommonFormatArgs, w->colours[1], screenCoords + ScreenCoordsXY{ 200, 0 });
 
     screenCoords.y += 20;
 
-    gfx_draw_string_left(dpi, STR_CURRENCY_SYMBOL_TEXT, nullptr, w->colours[1], screenCoords.x, screenCoords.y);
+    gfx_draw_string_left(dpi, STR_CURRENCY_SYMBOL_TEXT, nullptr, w->colours[1], screenCoords);
 
-    screenCoords.x = w->windowPos.x + window_custom_currency_widgets[WIDX_SYMBOL_TEXT].left + 1;
-    screenCoords.y = w->windowPos.y + window_custom_currency_widgets[WIDX_SYMBOL_TEXT].top;
+    screenCoords = w->windowPos
+        + ScreenCoordsXY{ window_custom_currency_widgets[WIDX_SYMBOL_TEXT].left + 1,
+                          window_custom_currency_widgets[WIDX_SYMBOL_TEXT].top };
 
     gfx_draw_string(dpi, CurrencyDescriptors[CURRENCY_CUSTOM].symbol_unicode, w->colours[1], screenCoords);
 
-    if (CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode == CURRENCY_PREFIX)
+    if (CurrencyDescriptors[CURRENCY_CUSTOM].affix_unicode == CurrencyAffix::Prefix)
     {
         gfx_draw_string_left(
-            dpi, STR_PREFIX, w, w->colours[1], w->windowPos.x + window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].left + 1,
-            w->windowPos.y + window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].top);
+            dpi, STR_PREFIX, w, w->colours[1],
+            w->windowPos
+                + ScreenCoordsXY{ window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].left + 1,
+                                  window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].top });
     }
     else
     {
         gfx_draw_string_left(
-            dpi, STR_SUFFIX, w, w->colours[1], w->windowPos.x + window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].left + 1,
-            w->windowPos.y + window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].top);
+            dpi, STR_SUFFIX, w, w->colours[1],
+            w->windowPos
+                + ScreenCoordsXY{ window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].left + 1,
+                                  window_custom_currency_widgets[WIDX_AFFIX_DROPDOWN].top });
     }
 }

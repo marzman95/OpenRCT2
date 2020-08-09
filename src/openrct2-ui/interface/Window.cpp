@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -175,6 +175,17 @@ rct_window* window_create(
     return w;
 }
 
+static ScreenCoordsXY ClampWindowToScreen(const ScreenCoordsXY& pos, const int32_t screenWidth, const int32_t width)
+{
+    auto screenPos = pos;
+    if (screenPos.x < 0)
+        screenPos.x = 0;
+    if (screenPos.x + width > screenWidth)
+        screenPos.x = screenWidth - width;
+
+    return screenPos;
+}
+
 rct_window* window_create_auto_pos(
     int32_t width, int32_t height, rct_window_event_list* event_handlers, rct_windowclass cls, uint16_t flags)
 {
@@ -182,79 +193,40 @@ rct_window* window_create_auto_pos(
     auto screenWidth = uiContext->GetWidth();
     auto screenHeight = uiContext->GetHeight();
 
-    // TODO dead code, looks like it is cascading the new window offset from an existing window
-    // we will have to re-implement this in our own way.
-    //
-    // if (cls & 0x80) {
-    //  cls &= ~0x80;
-    //  rct_window *w = window_find_by_number(0, 0);
-    //  if (w != nullptr) {
-    //      if (w->x > -60 && w->x < screenWidth - 20) {
-    //          if (w->y < screenHeight - 20) {
-    //              int32_t x = w->x;
-    //              if (w->x + width > screenWidth)
-    //                  x = screenWidth - 20 - width;
-    //              int32_t y = w->y;
-    //              return window_create(x + 10, y + 10, width, height, event_handlers, cls, flags);
-    //          }
-    //      }
-    //  }
-    // }
-
     // Place window in an empty corner of the screen
-    auto screenPos = ScreenCoordsXY{ 0, 30 };
-    if (window_fits_within_space(screenPos, width, height))
-        goto foundSpace;
+    const std::array cornerPositions = {
+        ScreenCoordsXY{ 0, 30 },                                          // topLeft
+        ScreenCoordsXY{ screenWidth - width, 30 },                        // topRight
+        ScreenCoordsXY{ 0, screenHeight - 34 - height },                  // bottomLeft
+        ScreenCoordsXY{ screenWidth - width, screenHeight - 34 - height } // bottomRight
+    };
 
-    screenPos = { screenWidth - width, 30 };
-    if (window_fits_within_space(screenPos, width, height))
-        goto foundSpace;
-
-    screenPos = { 0, screenHeight - 34 - height };
-    if (window_fits_within_space(screenPos, width, height))
-        goto foundSpace;
-
-    screenPos = { screenWidth - width, screenHeight - 34 - height };
-    if (window_fits_within_space(screenPos, width, height))
-        goto foundSpace;
+    for (const auto& cornerPos : cornerPositions)
+    {
+        if (window_fits_within_space(cornerPos, width, height))
+            return window_create(ClampWindowToScreen(cornerPos, screenWidth, width), width, height, event_handlers, cls, flags);
+    }
 
     // Place window next to another
     for (auto& w : g_window_list)
     {
         if (w->flags & WF_STICK_TO_BACK)
             continue;
-
-        screenPos = { w->windowPos.x + w->width + 2, w->windowPos.y };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x - w->width - 2, w->windowPos.y };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x, w->windowPos.y + w->height + 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x, w->windowPos.y - w->height - 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x + w->width + 2, w->windowPos.y - w->height - 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x - w->width - 2, w->windowPos.y - w->height - 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x + w->width + 2, w->windowPos.y + w->height + 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x - w->width - 2, w->windowPos.y + w->height + 2 };
-        if (window_fits_within_space(screenPos, width, height))
-            goto foundSpace;
+        const std::array offsets = { ScreenCoordsXY{ w->width + 2, 0 },
+                                     ScreenCoordsXY{ -w->width - 2, 0 },
+                                     ScreenCoordsXY{ 0, w->height + 2 },
+                                     ScreenCoordsXY{ 0, -w->height - 2 },
+                                     ScreenCoordsXY{ w->width + 2, -w->height - 2 },
+                                     ScreenCoordsXY{ -w->width - 2, -w->height - 2 },
+                                     ScreenCoordsXY{ w->width + 2, w->height + 2 },
+                                     ScreenCoordsXY{ -w->width - 2, w->height + 2 } };
+        for (const auto& offset : offsets)
+        {
+            auto screenPos = w->windowPos + offset;
+            if (window_fits_within_space(screenPos, width, height))
+                return window_create(
+                    ClampWindowToScreen(screenPos, screenWidth, width), width, height, event_handlers, cls, flags);
+        }
     }
 
     // Overlap
@@ -263,25 +235,24 @@ rct_window* window_create_auto_pos(
         if (w->flags & WF_STICK_TO_BACK)
             continue;
 
-        screenPos = { w->windowPos.x + w->width + 2, w->windowPos.y };
-        if (window_fits_on_screen(screenPos, width, height))
-            goto foundSpace;
+        // clang-format off
+        const std::array offsets = { ScreenCoordsXY{ w->width + 2, 0 },
+                                     ScreenCoordsXY{ -w->width - 2, 0 },
+                                     ScreenCoordsXY{ 0, w->height + 2 },
+                                     ScreenCoordsXY{ 0, -w->height - 2 } };
+        // clang-format on
 
-        screenPos = { w->windowPos.x - w->width - 2, w->windowPos.y };
-        if (window_fits_on_screen(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x, w->windowPos.y + w->height + 2 };
-        if (window_fits_on_screen(screenPos, width, height))
-            goto foundSpace;
-
-        screenPos = { w->windowPos.x, w->windowPos.y - w->height - 2 };
-        if (window_fits_on_screen(screenPos, width, height))
-            goto foundSpace;
+        for (const auto& offset : offsets)
+        {
+            auto screenPos = w->windowPos + offset;
+            if (window_fits_on_screen(screenPos, width, height))
+                return window_create(
+                    ClampWindowToScreen(screenPos, screenWidth, width), width, height, event_handlers, cls, flags);
+        }
     }
 
     // Cascade
-    screenPos = { 0, 30 };
+    auto screenPos = ScreenCoordsXY{ 0, 30 };
     for (auto& w : g_window_list)
     {
         if (screenPos == w->windowPos)
@@ -291,14 +262,7 @@ rct_window* window_create_auto_pos(
         }
     }
 
-    // Clamp to inside the screen
-foundSpace:
-    if (screenPos.x < 0)
-        screenPos.x = 0;
-    if (screenPos.x + width > screenWidth)
-        screenPos.x = screenWidth - width;
-
-    return window_create(screenPos, width, height, event_handlers, cls, flags);
+    return window_create(ClampWindowToScreen(screenPos, screenWidth, width), width, height, event_handlers, cls, flags);
 }
 
 rct_window* window_create_centred(
@@ -366,7 +330,7 @@ static void window_scroll_wheel_input(rct_window* w, int32_t scrollIndex, int32_
 
     if (scroll->flags & VSCROLLBAR_VISIBLE)
     {
-        int32_t size = widget->bottom - widget->top - 1;
+        int32_t size = widget->height() - 1;
         if (scroll->flags & HSCROLLBAR_VISIBLE)
             size -= 11;
         size = std::max(0, scroll->v_bottom - size);
@@ -374,7 +338,7 @@ static void window_scroll_wheel_input(rct_window* w, int32_t scrollIndex, int32_
     }
     else
     {
-        int32_t size = widget->right - widget->left - 1;
+        int32_t size = widget->width() - 1;
         if (scroll->flags & VSCROLLBAR_VISIBLE)
             size -= 11;
         size = std::max(0, scroll->h_right - size);
@@ -622,8 +586,7 @@ void window_draw_widgets(rct_window* w, rct_drawpixelinfo* dpi)
     rct_widgetindex widgetIndex;
 
     if ((w->flags & WF_TRANSPARENT) && !(w->flags & WF_NO_BACKGROUND))
-        gfx_filter_rect(
-            dpi, w->windowPos.x, w->windowPos.y, w->windowPos.x + w->width - 1, w->windowPos.y + w->height - 1, PALETTE_51);
+        gfx_filter_rect(dpi, { w->windowPos, w->windowPos + ScreenCoordsXY{ w->width - 1, w->height - 1 } }, PALETTE_51);
 
     // todo: some code missing here? Between 006EB18C and 006EB260
 
@@ -664,7 +627,7 @@ static void window_invalidate_pressed_image_buttons(rct_window* w)
             continue;
 
         if (widget_is_pressed(w, widgetIndex) || widget_is_active_tool(w, widgetIndex))
-            gfx_set_dirty_blocks(w->windowPos.x, w->windowPos.y, w->windowPos.x + w->width, w->windowPos.y + w->height);
+            gfx_set_dirty_blocks({ w->windowPos, w->windowPos + ScreenCoordsXY{ w->width, w->height } });
     }
 }
 

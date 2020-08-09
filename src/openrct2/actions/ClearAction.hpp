@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -102,7 +102,7 @@ private:
         {
             for (int32_t x = x0; x <= x1; x += COORDS_XY_STEP)
             {
-                if (MapCanClearAt({ x, y }))
+                if (LocationValid({ x, y }) && MapCanClearAt({ x, y }))
                 {
                     auto cost = ClearSceneryFromTile({ x, y }, executing);
                     if (cost != MONEY32_UNDEFINED)

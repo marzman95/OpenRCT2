@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -37,7 +37,7 @@ Painter::Painter(const std::shared_ptr<IUiContext>& uiContext)
 void Painter::Paint(IDrawingEngine& de)
 {
     auto dpi = de.GetDrawingPixelInfo();
-    if (gIntroState != INTRO_STATE_NONE)
+    if (gIntroState != IntroState::None)
     {
         intro_draw(dpi);
     }
@@ -50,7 +50,7 @@ void Painter::Paint(IDrawingEngine& de)
 
         if ((gScreenFlags & SCREEN_FLAGS_TITLE_DEMO) && !title_should_hide_version_info())
         {
-            DrawOpenRCT2(dpi, 0, _uiContext->GetHeight() - 20);
+            DrawOpenRCT2(dpi, { 0, _uiContext->GetHeight() - 20 });
         }
 
         gfx_draw_pickedup_peep(dpi);
@@ -99,7 +99,7 @@ void Painter::PaintReplayNotice(rct_drawpixelinfo* dpi, const char* text)
         gfx_draw_string(dpi, buffer, COLOUR_SATURATED_RED, screenCoords);
 
     // Make area dirty so the text doesn't get drawn over the last
-    gfx_set_dirty_blocks(screenCoords.x, screenCoords.y, screenCoords.x + stringWidth, screenCoords.y + 16);
+    gfx_set_dirty_blocks({ screenCoords, screenCoords + ScreenCoordsXY{ stringWidth, 16 } });
 }
 
 void Painter::PaintFPS(rct_drawpixelinfo* dpi)
@@ -124,7 +124,7 @@ void Painter::PaintFPS(rct_drawpixelinfo* dpi)
     gfx_draw_string(dpi, buffer, 0, screenCoords);
 
     // Make area dirty so the text doesn't get drawn over the last
-    gfx_set_dirty_blocks(screenCoords.x - 16, screenCoords.y - 4, gLastDrawStringX + 16, 16);
+    gfx_set_dirty_blocks({ { screenCoords - ScreenCoordsXY{ 16, 4 } }, { gLastDrawStringX + 16, 16 } });
 }
 
 void Painter::MeasureFPS()

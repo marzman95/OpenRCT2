@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -50,7 +50,7 @@ struct lightlist_entry
 {
     int16_t x, y, z;
     ScreenCoordsXY viewCoords;
-    uint8_t lightType;
+    LightType lightType;
     uint8_t lightIntensity;
     uint32_t lightID;
     uint16_t lightIDqualifier;
@@ -77,7 +77,7 @@ static uint8_t _current_view_rotation_back = 0;
 static ZoomLevel _current_view_zoom_back = 0;
 static ZoomLevel _current_view_zoom_back_delay = 0;
 
-static rct_palette gPalette_light;
+static GamePalette gPalette_light;
 
 static uint8_t calc_light_intensity_lantern(int32_t x, int32_t y)
 {
@@ -208,7 +208,7 @@ void lightfx_prepare_light_list()
         if ((posOnScreenX < -128) || (posOnScreenY < -128) || (posOnScreenX > _pixelInfo.width + 128)
             || (posOnScreenY > _pixelInfo.height + 128))
         {
-            entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
+            entry->lightType = LightType::None;
             continue;
         }
 
@@ -377,7 +377,7 @@ void lightfx_prepare_light_list()
 
             if (lightIntensityOccluded == 0)
             {
-                entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
+                entry->lightType = LightType::None;
                 continue;
             }
 
@@ -389,13 +389,14 @@ void lightfx_prepare_light_list()
 
         if (_current_view_zoom_front > 0)
         {
-            if ((entry->lightType & 0x3) < static_cast<int8_t>(_current_view_zoom_front))
+            if (GetLightTypeSize(entry->lightType) < static_cast<int8_t>(_current_view_zoom_front))
             {
-                entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
+                entry->lightType = LightType::None;
                 continue;
             }
 
-            entry->lightType -= static_cast<int8_t>(_current_view_zoom_front);
+            entry->lightType = SetLightTypeSize(
+                entry->lightType, GetLightTypeSize(entry->lightType) - static_cast<int8_t>(_current_view_zoom_front));
         }
     }
 }
@@ -478,42 +479,42 @@ void lightfx_render_lights_to_frontbuffer()
 
         switch (entry->lightType)
         {
-            case LIGHTFX_LIGHT_TYPE_LANTERN_0:
+            case LightType::Lantern0:
                 bufReadWidth = 32;
                 bufReadHeight = 32;
                 bufReadBase = _bakedLightTexture_lantern_0;
                 break;
-            case LIGHTFX_LIGHT_TYPE_LANTERN_1:
+            case LightType::Lantern1:
                 bufReadWidth = 64;
                 bufReadHeight = 64;
                 bufReadBase = _bakedLightTexture_lantern_1;
                 break;
-            case LIGHTFX_LIGHT_TYPE_LANTERN_2:
+            case LightType::Lantern2:
                 bufReadWidth = 128;
                 bufReadHeight = 128;
                 bufReadBase = _bakedLightTexture_lantern_2;
                 break;
-            case LIGHTFX_LIGHT_TYPE_LANTERN_3:
+            case LightType::Lantern3:
                 bufReadWidth = 256;
                 bufReadHeight = 256;
                 bufReadBase = _bakedLightTexture_lantern_3;
                 break;
-            case LIGHTFX_LIGHT_TYPE_SPOT_0:
+            case LightType::Spot0:
                 bufReadWidth = 32;
                 bufReadHeight = 32;
                 bufReadBase = _bakedLightTexture_spot_0;
                 break;
-            case LIGHTFX_LIGHT_TYPE_SPOT_1:
+            case LightType::Spot1:
                 bufReadWidth = 64;
                 bufReadHeight = 64;
                 bufReadBase = _bakedLightTexture_spot_1;
                 break;
-            case LIGHTFX_LIGHT_TYPE_SPOT_2:
+            case LightType::Spot2:
                 bufReadWidth = 128;
                 bufReadHeight = 128;
                 bufReadBase = _bakedLightTexture_spot_2;
                 break;
-            case LIGHTFX_LIGHT_TYPE_SPOT_3:
+            case LightType::Spot3:
                 bufReadWidth = 256;
                 bufReadHeight = 256;
                 bufReadBase = _bakedLightTexture_spot_3;
@@ -614,12 +615,12 @@ void* lightfx_get_front_buffer()
     return _light_rendered_buffer_front;
 }
 
-const rct_palette* lightfx_get_palette()
+const GamePalette& lightfx_get_palette()
 {
-    return &gPalette_light;
+    return gPalette_light;
 }
 
-void lightfx_add_3d_light(uint32_t lightID, uint16_t lightIDqualifier, int16_t x, int16_t y, uint16_t z, uint8_t lightType)
+void lightfx_add_3d_light(uint32_t lightID, uint16_t lightIDqualifier, int16_t x, int16_t y, uint16_t z, LightType lightType)
 {
     if (LightListCurrentCountBack == 15999)
     {
@@ -665,7 +666,7 @@ void lightfx_add_3d_light(uint32_t lightID, uint16_t lightIDqualifier, int16_t x
 }
 
 void lightfx_add_3d_light_magic_from_drawing_tile(
-    const CoordsXY& mapPosition, int16_t offsetX, int16_t offsetY, int16_t offsetZ, uint8_t lightType)
+    const CoordsXY& mapPosition, int16_t offsetX, int16_t offsetY, int16_t offsetZ, LightType lightType)
 {
     int16_t x = mapPosition.x + offsetX + 16;
     int16_t y = mapPosition.y + offsetY + 16;
@@ -692,23 +693,19 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
         10, 10, 9, 8, 7, 6, 4, 2, 0, -2, -4, -6, -7, -8, -9, -10, -10, -10, -9, -8, -7, -6, -4, -2, 0, 2, 4, 6, 7, 8, 9, 10,
     };
 
-    auto ride = get_ride(vehicle->ride);
+    auto ride = vehicle->GetRide();
 
     switch (ride->type)
     {
         case RIDE_TYPE_OBSERVATION_TOWER:
             lightfx_add_3d_light(
-                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y + 16, vehicle->z,
-                LIGHTFX_LIGHT_TYPE_SPOT_3);
+                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y + 16, vehicle->z, LightType::Spot3);
             lightfx_add_3d_light(
-                vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x + 16, vehicle->y, vehicle->z,
-                LIGHTFX_LIGHT_TYPE_SPOT_3);
+                vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x + 16, vehicle->y, vehicle->z, LightType::Spot3);
             lightfx_add_3d_light(
-                vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x - 16, vehicle->y, vehicle->z,
-                LIGHTFX_LIGHT_TYPE_SPOT_3);
+                vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x - 16, vehicle->y, vehicle->z, LightType::Spot3);
             lightfx_add_3d_light(
-                vehicleID, 0x0300 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y - 16, vehicle->z,
-                LIGHTFX_LIGHT_TYPE_SPOT_3);
+                vehicleID, 0x0300 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y - 16, vehicle->z, LightType::Spot3);
             break;
         case RIDE_TYPE_MINE_TRAIN_COASTER:
         case RIDE_TYPE_GHOST_TRAIN:
@@ -717,16 +714,16 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
                 place_x -= offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y -= offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LIGHTFX_LIGHT_TYPE_SPOT_3);
+                    vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LightType::Spot3);
             }
             break;
         case RIDE_TYPE_CHAIRLIFT:
             lightfx_add_3d_light(
-                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z - 16,
-                LIGHTFX_LIGHT_TYPE_LANTERN_2);
+                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z - 16, LightType::Lantern2);
             break;
         case RIDE_TYPE_BOAT_HIRE:
         case RIDE_TYPE_CAR_RIDE:
+        case RIDE_TYPE_MONSTER_TRUCKS:
         case RIDE_TYPE_GO_KARTS:
         case RIDE_TYPE_DODGEMS:
         case RIDE_TYPE_MINI_HELICOPTERS:
@@ -736,9 +733,10 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
         case RIDE_TYPE_WATER_COASTER:
         {
             Vehicle* vehicle_draw = vehicle->TrainHead();
-            if (vehicle_draw->next_vehicle_on_train != SPRITE_INDEX_NULL)
+            auto nextVeh = GetEntity<Vehicle>(vehicle_draw->next_vehicle_on_train);
+            if (nextVeh != nullptr)
             {
-                vehicle_draw = GET_VEHICLE(vehicle_draw->next_vehicle_on_train);
+                vehicle_draw = nextVeh;
             }
             place_x = vehicle_draw->x;
             place_y = vehicle_draw->y;
@@ -746,42 +744,37 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
             place_x -= offsetLookup[(vehicle_draw->sprite_direction + 0) % 32];
             place_y -= offsetLookup[(vehicle_draw->sprite_direction + 8) % 32];
             lightfx_add_3d_light(
-                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LIGHTFX_LIGHT_TYPE_SPOT_2);
+                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LightType::Spot2);
             place_x -= offsetLookup[(vehicle_draw->sprite_direction + 0) % 32];
             place_y -= offsetLookup[(vehicle_draw->sprite_direction + 8) % 32];
             lightfx_add_3d_light(
-                vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LIGHTFX_LIGHT_TYPE_SPOT_2);
+                vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z, LightType::Spot2);
             break;
         }
         case RIDE_TYPE_MONORAIL:
             lightfx_add_3d_light(
-                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y, vehicle->z + 12,
-                LIGHTFX_LIGHT_TYPE_SPOT_2);
+                vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, vehicle->x, vehicle->y, vehicle->z + 12, LightType::Spot2);
             if (vehicle == vehicle->TrainHead())
             {
                 place_x -= offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y -= offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10, LightType::Lantern3);
                 place_x -= offsetLookup[(vehicle->sprite_direction + 0) % 32] * 3;
                 place_y -= offsetLookup[(vehicle->sprite_direction + 8) % 32] * 3;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2, LightType::Lantern3);
             }
             if (vehicle == vehicle->TrainTail())
             {
                 place_x += offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y += offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0300 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0300 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10, LightType::Lantern3);
                 place_x += offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y += offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0400 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0400 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2, LightType::Lantern3);
             }
             break;
         case RIDE_TYPE_MINIATURE_RAILWAY:
@@ -790,19 +783,16 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
                 place_x -= offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y -= offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0100 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10, LightType::Lantern3);
                 place_x -= offsetLookup[(vehicle->sprite_direction + 0) % 32] * 2;
                 place_y -= offsetLookup[(vehicle->sprite_direction + 8) % 32] * 2;
                 lightfx_add_3d_light(
-                    vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0200 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 2, LightType::Lantern3);
             }
             else
             {
                 lightfx_add_3d_light(
-                    vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10,
-                    LIGHTFX_LIGHT_TYPE_LANTERN_3);
+                    vehicleID, 0x0000 | LIGHTFX_LIGHT_QUALIFIER_SPRITE, place_x, place_y, place_z + 10, LightType::Lantern3);
             }
             break;
         default:
@@ -865,7 +855,7 @@ void lightfx_apply_palette_filter(uint8_t i, uint8_t* r, uint8_t* g, uint8_t* b)
     natLightB *= 1.0f + overExpose;
     overExpose *= 255.0f;
 
-    float targetFogginess = static_cast<float>(gClimateCurrent.RainLevel) / 8.0f;
+    float targetFogginess = static_cast<float>(gClimateCurrent.Level) / 8.0f;
     targetFogginess += (night * night) * 0.15f;
 
     if (gClimateCurrent.Temperature < 10)
@@ -908,7 +898,7 @@ void lightfx_apply_palette_filter(uint8_t i, uint8_t* r, uint8_t* g, uint8_t* b)
     natLightG /= 1.0f + lightPolution;
     natLightB /= 1.0f + lightPolution;
 
-    reduceColourLit += static_cast<float>(gClimateCurrent.RainLevel) / 2.0f;
+    reduceColourLit += static_cast<float>(gClimateCurrent.Level) / 2.0f;
 
     reduceColourNat /= 1.0f + fogginess;
     reduceColourLit /= 1.0f + fogginess;
@@ -971,12 +961,12 @@ void lightfx_apply_palette_filter(uint8_t i, uint8_t* r, uint8_t* g, uint8_t* b)
             std::max(
                 0.0f, (-overExpose + static_cast<float>(*b) * reduceColourNat * natLightB + envFog * fogB + addLightNatB))));
 
-        rct_palette_entry* dstEntry = &gPalette_light.entries[i];
-        dstEntry->red = static_cast<uint8_t>(
+        auto dstEntry = &gPalette_light[i];
+        dstEntry->Red = static_cast<uint8_t>(
             std::min<float>(0xFF, (static_cast<float>(*r) * reduceColourLit * boost + lightFog) * elecMultR));
-        dstEntry->green = static_cast<uint8_t>(
+        dstEntry->Green = static_cast<uint8_t>(
             std::min<float>(0xFF, (static_cast<float>(*g) * reduceColourLit * boost + lightFog) * elecMultG));
-        dstEntry->blue = static_cast<uint8_t>(
+        dstEntry->Blue = static_cast<uint8_t>(
             std::min<float>(0xFF, (static_cast<float>(*b) * reduceColourLit * boost + lightFog) * elecMultB));
     }
 }

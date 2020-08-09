@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -804,7 +804,7 @@ static void format_currency(char** dest, size_t* size, int64_t value)
 
     // Currency symbol
     const utf8* symbol = currencyDesc->symbol_unicode;
-    uint8_t affix = currencyDesc->affix_unicode;
+    CurrencyAffix affix = currencyDesc->affix_unicode;
     if (!font_supports_string(symbol, FONT_SIZE_MEDIUM))
     {
         symbol = currencyDesc->symbol_ascii;
@@ -812,7 +812,7 @@ static void format_currency(char** dest, size_t* size, int64_t value)
     }
 
     // Prefix
-    if (affix == CURRENCY_PREFIX)
+    if (affix == CurrencyAffix::Prefix)
         format_append_string(dest, size, symbol);
     if ((*size) == 0)
         return;
@@ -822,7 +822,7 @@ static void format_currency(char** dest, size_t* size, int64_t value)
         return;
 
     // Currency symbol suffix
-    if (affix == CURRENCY_SUFFIX)
+    if (affix == CurrencyAffix::Suffix)
         format_append_string(dest, size, symbol);
 }
 
@@ -845,7 +845,7 @@ static void format_currency_2dp(char** dest, size_t* size, int64_t value)
 
     // Currency symbol
     const utf8* symbol = currencyDesc->symbol_unicode;
-    uint8_t affix = currencyDesc->affix_unicode;
+    CurrencyAffix affix = currencyDesc->affix_unicode;
     if (!font_supports_string(symbol, FONT_SIZE_MEDIUM))
     {
         symbol = currencyDesc->symbol_ascii;
@@ -853,7 +853,7 @@ static void format_currency_2dp(char** dest, size_t* size, int64_t value)
     }
 
     // Prefix
-    if (affix == CURRENCY_PREFIX)
+    if (affix == CurrencyAffix::Prefix)
         format_append_string(dest, size, symbol);
     if ((*size) == 0)
         return;
@@ -871,7 +871,7 @@ static void format_currency_2dp(char** dest, size_t* size, int64_t value)
         return;
 
     // Currency symbol suffix
-    if (affix == CURRENCY_SUFFIX)
+    if (affix == CurrencyAffix::Suffix)
         format_append_string(dest, size, symbol);
 }
 
@@ -1088,7 +1088,7 @@ static void format_string_code(uint32_t format_code, char** dest, size_t* size, 
             *args += sizeof(uintptr_t);
 
             if (value != 0)
-                format_append_string(dest, size, (char*)value);
+                format_append_string(dest, size, reinterpret_cast<char*>(value));
             break;
         case FORMAT_MONTHYEAR:
             // Pop argument
@@ -1318,7 +1318,7 @@ void format_string(utf8* dest, size_t size, rct_string_id format, const void* ar
 
     utf8* end = dest;
     size_t left = size;
-    format_string_part(&end, &left, format, (char**)&args);
+    format_string_part(&end, &left, format, reinterpret_cast<char**>(const_cast<void**>(&args)));
     if (left == 0)
     {
         // Replace last character with null terminator
@@ -1353,7 +1353,7 @@ void format_string_raw(utf8* dest, size_t size, const utf8* src, const void* arg
 
     utf8* end = dest;
     size_t left = size;
-    format_string_part_from_raw(&end, &left, src, (char**)&args);
+    format_string_part_from_raw(&end, &left, src, reinterpret_cast<char**>(const_cast<void**>(&args)));
     if (left == 0)
     {
         // Replace last character with null terminator

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -323,37 +323,32 @@ int32_t strcicmp(char const* a, char const* b)
 // - Guest 100
 // - John v2.0
 // - John v2.1
-int32_t strlogicalcmp(char const* a, char const* b)
+int32_t strlogicalcmp(const char* s1, const char* s2)
 {
-    for (;; a++, b++)
+    for (;;)
     {
-        int32_t result = tolower(*a) - tolower(*b);
-        bool both_numeric = *a >= '0' && *a <= '9' && *b >= '0' && *b <= '9';
-        if (result != 0 || !*a || both_numeric)
-        { // difference found || end of string
-            if (both_numeric)
-            { // a and b both start with a number
-                // Get the numbers in the string at current positions
-                int32_t na = 0, nb = 0;
-                for (; *a >= '0' && *a <= '9'; a++)
-                {
-                    na *= 10;
-                    na += *a - '0';
-                }
-                for (; *b >= '0' && *b <= '9'; b++)
-                {
-                    nb *= 10;
-                    nb += *b - '0';
-                }
-                // In case the numbers are the same
-                if (na == nb)
-                    continue;
-                return na - nb;
-            }
+        if (*s2 == '\0')
+            return *s1 != '\0';
+        else if (*s1 == '\0')
+            return -1;
+        else if (!(isdigit(*s1) && isdigit(*s2)))
+        {
+            if (tolower(*s1) != tolower(*s2))
+                return tolower(*s1) - tolower(*s2);
             else
-            {
-                return result;
-            }
+                (++s1, ++s2);
+        }
+        else
+        {
+            char *lim1, *lim2;
+            unsigned long n1 = strtoul(s1, &lim1, 10);
+            unsigned long n2 = strtoul(s2, &lim2, 10);
+            if (n1 > n2)
+                return 1;
+            else if (n1 < n2)
+                return -1;
+            s1 = lim1;
+            s2 = lim2;
         }
     }
 }
@@ -591,34 +586,30 @@ uint8_t* util_zlib_inflate(uint8_t* data, size_t data_in_size, size_t* data_out_
  * @brief Deflates input using zlib
  * @param data Data to be compressed
  * @param data_in_size Size of data to be compressed
- * @param data_out_size Pointer to a variable where output size will be written
- * @return Returns a pointer to memory holding compressed data or NULL on failure.
- * @note It is caller's responsibility to free() the returned pointer once done with it.
+ * @return Returns an optional std::vector of bytes, which is equal to std::nullopt when deflate has failed
  */
-uint8_t* util_zlib_deflate(const uint8_t* data, size_t data_in_size, size_t* data_out_size)
+std::optional<std::vector<uint8_t>> util_zlib_deflate(const uint8_t* data, size_t data_in_size)
 {
     int32_t ret = Z_OK;
-    uLongf out_size = static_cast<uLongf>(*data_out_size);
+    uLongf out_size = 0;
     uLong buffer_size = compressBound(static_cast<uLong>(data_in_size));
-    uint8_t* buffer = static_cast<uint8_t*>(malloc(buffer_size));
+    std::vector<uint8_t> buffer(buffer_size);
     do
     {
         if (ret == Z_BUF_ERROR)
         {
             buffer_size *= 2;
             out_size = buffer_size;
-            buffer = static_cast<uint8_t*>(realloc(buffer, buffer_size));
+            buffer.resize(buffer_size);
         }
         else if (ret == Z_STREAM_ERROR)
         {
             log_error("Your build is shipped with broken zlib. Please use the official build.");
-            free(buffer);
-            return nullptr;
+            return std::nullopt;
         }
-        ret = compress(buffer, &out_size, data, static_cast<uLong>(data_in_size));
+        ret = compress(buffer.data(), &out_size, data, static_cast<uLong>(data_in_size));
     } while (ret != Z_OK);
-    *data_out_size = out_size;
-    buffer = static_cast<uint8_t*>(realloc(buffer, *data_out_size));
+    buffer.resize(out_size);
     return buffer;
 }
 

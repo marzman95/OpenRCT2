@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -8,13 +8,12 @@
  *****************************************************************************/
 
 #ifdef _WIN32
-#    define WIN32_LEAN_AND_MEAN
 #    include <windows.h>
 #else
 #    include <sys/stat.h>
 #endif
 
-#include "../platform/platform.h"
+#include "../platform/Platform2.h"
 #include "../util/Util.h"
 #include "File.h"
 #include "FileStream.hpp"
@@ -26,7 +25,7 @@ namespace File
 {
     bool Exists(const std::string& path)
     {
-        return platform_file_exists(path.c_str());
+        return Platform::FileExists(path);
     }
 
     bool Copy(const std::string& srcPath, const std::string& dstPath, bool overwrite)
@@ -60,7 +59,7 @@ namespace File
         }
 
         fs.seekg(0, std::ios::end);
-        auto fsize = (size_t)fs.tellg();
+        auto fsize = static_cast<size_t>(fs.tellg());
         if (fsize > SIZE_MAX)
         {
             std::string message = String::StdFormat(
@@ -88,7 +87,7 @@ namespace File
 
     void WriteAllBytes(const std::string& path, const void* buffer, size_t length)
     {
-        auto fs = FileStream(path, FILE_MODE_WRITE);
+        auto fs = OpenRCT2::FileStream(path, OpenRCT2::FILE_MODE_WRITE);
         fs.Write(buffer, length);
     }
 

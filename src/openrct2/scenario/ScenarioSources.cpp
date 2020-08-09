@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -357,7 +357,7 @@ namespace ScenarioSources
 
         outDesc->title = nullptr;
         outDesc->id = SC_UNIDENTIFIED;
-        outDesc->source = SCENARIO_SOURCE_OTHER;
+        outDesc->source = static_cast<uint8_t>(ScenarioSource::Other);
         outDesc->index = -1;
         outDesc->category = SCENARIO_CATEGORY_OTHER;
         return false;
@@ -388,7 +388,7 @@ namespace ScenarioSources
 
         outDesc->title = "";
         outDesc->id = SC_UNIDENTIFIED;
-        outDesc->source = SCENARIO_SOURCE_OTHER;
+        outDesc->source = static_cast<uint8_t>(ScenarioSource::Other);
         outDesc->index = -1;
         outDesc->category = SCENARIO_CATEGORY_OTHER;
         return false;

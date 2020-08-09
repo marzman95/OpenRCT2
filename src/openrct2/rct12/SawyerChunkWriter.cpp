@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -15,7 +15,7 @@
 // Maximum buffer size to store compressed data, maximum of 16 MiB
 constexpr size_t MAX_COMPRESSED_CHUNK_SIZE = 16 * 1024 * 1024;
 
-SawyerChunkWriter::SawyerChunkWriter(IStream* stream)
+SawyerChunkWriter::SawyerChunkWriter(OpenRCT2::IStream* stream)
     : _stream(stream)
 {
 }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -260,6 +260,7 @@ enum WINDOW_OBJECT_LOAD_ERROR_WIDGET_IDX {
     WIDX_DOWNLOAD_ALL
 };
 
+static constexpr const rct_string_id WINDOW_TITLE = STR_OBJECT_LOAD_ERROR_TITLE;
 static constexpr const int32_t WW = 450;
 static constexpr const int32_t WH = 400;
 static constexpr const int32_t WW_LESS_PADDING = WW - 5;
@@ -268,17 +269,15 @@ constexpr int32_t SOURCE_COL_LEFT = (WW_LESS_PADDING / 4) + 1;
 constexpr int32_t TYPE_COL_LEFT = 5 * WW_LESS_PADDING / 8 + 1;
 
 static rct_widget window_object_load_error_widgets[] = {
-    { WWT_FRAME,             0, 0,               WW - 1,                0,          WH - 1,     STR_NONE,                       STR_NONE },                // Background
-    { WWT_CAPTION,           0, 1,               WW - 2,                1,          14,         STR_OBJECT_LOAD_ERROR_TITLE,    STR_WINDOW_TITLE_TIP },    // Title bar
-    { WWT_CLOSEBOX,          0, WW - 13,         WW - 3,                2,          13,         STR_CLOSE_X,                    STR_CLOSE_WINDOW_TIP },    // Close button
-    { WWT_TABLE_HEADER,      0, NAME_COL_LEFT,   SOURCE_COL_LEFT - 1,   57,         70,         STR_OBJECT_NAME,                STR_NONE },                // 'Object name' header
-    { WWT_TABLE_HEADER,      0, SOURCE_COL_LEFT, TYPE_COL_LEFT - 1,     57,         70,         STR_OBJECT_SOURCE,              STR_NONE },                // 'Object source' header
-    { WWT_TABLE_HEADER,      0, TYPE_COL_LEFT,   WW_LESS_PADDING - 1,   57,         70,         STR_OBJECT_TYPE,                STR_NONE },                // 'Object type' header
-    { WWT_SCROLL,            0, 4,               WW_LESS_PADDING,       70,         WH - 33,    SCROLL_VERTICAL,                STR_NONE },                // Scrollable list area
-    { WWT_BUTTON,            0, 4,               148,                   WH - 23,    WH - 10,    STR_COPY_SELECTED,              STR_COPY_SELECTED_TIP },   // Copy selected button
-    { WWT_BUTTON,            0, 152,             296,                   WH - 23,    WH - 10,    STR_COPY_ALL,                   STR_COPY_ALL_TIP },        // Copy all button
+    WINDOW_SHIM(WINDOW_TITLE, WW, WH),
+    MakeWidget({  NAME_COL_LEFT,  57}, {108,  14}, WWT_TABLE_HEADER, 0, STR_OBJECT_NAME                                   ), // 'Object name' header
+    MakeWidget({SOURCE_COL_LEFT,  57}, {166,  14}, WWT_TABLE_HEADER, 0, STR_OBJECT_SOURCE                                 ), // 'Object source' header
+    MakeWidget({  TYPE_COL_LEFT,  57}, {166,  14}, WWT_TABLE_HEADER, 0, STR_OBJECT_TYPE                                   ), // 'Object type' header
+    MakeWidget({  NAME_COL_LEFT,  70}, {442, 298}, WWT_SCROLL,       0, SCROLL_VERTICAL                                   ), // Scrollable list area
+    MakeWidget({  NAME_COL_LEFT, 377}, {145,  14}, WWT_BUTTON,       0, STR_COPY_SELECTED,           STR_COPY_SELECTED_TIP), // Copy selected button
+    MakeWidget({            152, 377}, {145,  14}, WWT_BUTTON,       0, STR_COPY_ALL,                STR_COPY_ALL_TIP     ), // Copy all button
 #ifndef DISABLE_HTTP
-    { WWT_BUTTON,            0, 300,             WW_LESS_PADDING,       WH - 23,    WH - 10,    STR_DOWNLOAD_ALL,               STR_DOWNLOAD_ALL_TIP },    // Download all button
+    MakeWidget({            300, 377}, {146,  14}, WWT_BUTTON,       0, STR_DOWNLOAD_ALL,            STR_DOWNLOAD_ALL_TIP ), // Download all button
 #endif
     { WIDGETS_END },
 };
@@ -558,21 +557,25 @@ static void window_object_load_error_paint(rct_window* w, rct_drawpixelinfo* dpi
     window_draw_widgets(w, dpi);
 
     // Draw explanatory message
-    set_format_arg(0, rct_string_id, STR_OBJECT_ERROR_WINDOW_EXPLANATION);
+    auto ft = Formatter::Common();
+    ft.Add<rct_string_id>(STR_OBJECT_ERROR_WINDOW_EXPLANATION);
     gfx_draw_string_left_wrapped(
-        dpi, gCommonFormatArgs, w->windowPos.x + 5, w->windowPos.y + 18, WW - 10, STR_BLACK_STRING, COLOUR_BLACK);
+        dpi, gCommonFormatArgs, w->windowPos + ScreenCoordsXY{ 5, 18 }, WW - 10, STR_BLACK_STRING, COLOUR_BLACK);
 
     // Draw file name
-    set_format_arg(0, rct_string_id, STR_OBJECT_ERROR_WINDOW_FILE);
-    set_format_arg(2, utf8*, file_path.c_str());
+    ft = Formatter::Common();
+    ft.Add<rct_string_id>(STR_OBJECT_ERROR_WINDOW_FILE);
+    ft.Add<utf8*>(file_path.c_str());
     gfx_draw_string_left_clipped(
-        dpi, STR_BLACK_STRING, gCommonFormatArgs, COLOUR_BLACK, w->windowPos.x + 5, w->windowPos.y + 43, WW - 5);
+        dpi, STR_BLACK_STRING, gCommonFormatArgs, COLOUR_BLACK, { w->windowPos.x + 5, w->windowPos.y + 43 }, WW - 5);
 }
 
 static void window_object_load_error_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
 {
-    gfx_fill_rect(dpi, dpi->x, dpi->y, dpi->x + dpi->width - 1, dpi->y + dpi->height - 1, ColourMapA[w->colours[1]].mid_light);
-    const int32_t list_width = w->widgets[WIDX_SCROLL].right - w->widgets[WIDX_SCROLL].left;
+    auto dpiCoords = ScreenCoordsXY{ dpi->x, dpi->y };
+    gfx_fill_rect(
+        dpi, { dpiCoords, dpiCoords + ScreenCoordsXY{ dpi->width - 1, dpi->height - 1 } }, ColourMapA[w->colours[1]].mid_light);
+    const int32_t list_width = w->widgets[WIDX_SCROLL].width();
 
     for (int32_t i = 0; i < w->no_list_items; i++)
     {
@@ -584,19 +587,14 @@ static void window_object_load_error_scrollpaint(rct_window* w, rct_drawpixelinf
         if (screenCoords.y + SCROLLABLE_ROW_HEIGHT < dpi->y)
             continue;
 
+        auto screenRect = ScreenRect{ { 0, screenCoords.y }, { list_width, screenCoords.y + SCROLLABLE_ROW_HEIGHT - 1 } };
         // If hovering over item, change the color and fill the backdrop.
         if (i == w->selected_list_item)
-            gfx_fill_rect(
-                dpi, 0, screenCoords.y, list_width, screenCoords.y + SCROLLABLE_ROW_HEIGHT - 1,
-                ColourMapA[w->colours[1]].darker);
+            gfx_fill_rect(dpi, screenRect, ColourMapA[w->colours[1]].darker);
         else if (i == highlighted_index)
-            gfx_fill_rect(
-                dpi, 0, screenCoords.y, list_width, screenCoords.y + SCROLLABLE_ROW_HEIGHT - 1,
-                ColourMapA[w->colours[1]].mid_dark);
+            gfx_fill_rect(dpi, screenRect, ColourMapA[w->colours[1]].mid_dark);
         else if ((i & 1) != 0) // odd / even check
-            gfx_fill_rect(
-                dpi, 0, screenCoords.y, list_width, screenCoords.y + SCROLLABLE_ROW_HEIGHT - 1,
-                ColourMapA[w->colours[1]].light);
+            gfx_fill_rect(dpi, screenRect, ColourMapA[w->colours[1]].light);
 
         // Draw the actual object entry's name...
         screenCoords.x = NAME_COL_LEFT - 3;
@@ -605,11 +603,11 @@ static void window_object_load_error_scrollpaint(rct_window* w, rct_drawpixelinf
         // ... source game ...
         rct_string_id sourceStringId = object_manager_get_source_game_string(
             object_entry_get_source_game_legacy(&_invalid_entries[i]));
-        gfx_draw_string_left(dpi, sourceStringId, nullptr, COLOUR_DARK_GREEN, SOURCE_COL_LEFT - 3, screenCoords.y);
+        gfx_draw_string_left(dpi, sourceStringId, nullptr, COLOUR_DARK_GREEN, { SOURCE_COL_LEFT - 3, screenCoords.y });
 
         // ... and type
         rct_string_id type = get_object_type_string(&_invalid_entries[i]);
-        gfx_draw_string_left(dpi, type, nullptr, COLOUR_DARK_GREEN, TYPE_COL_LEFT - 3, screenCoords.y);
+        gfx_draw_string_left(dpi, type, nullptr, COLOUR_DARK_GREEN, { TYPE_COL_LEFT - 3, screenCoords.y });
     }
 }
 

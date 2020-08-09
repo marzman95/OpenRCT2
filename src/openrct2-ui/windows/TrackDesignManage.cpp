@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014-2019 OpenRCT2 developers
+ * Copyright (c) 2014-2020 OpenRCT2 developers
  *
  * For a complete list of all authors, please refer to contributors.md
  * Interested in contributing? Visit https://github.com/OpenRCT2/OpenRCT2
@@ -36,15 +36,15 @@ enum {
 
 static rct_widget window_track_manage_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-    { WWT_BUTTON,           0,  10,     119,    24,     35,     STR_TRACK_MANAGE_RENAME,    STR_NONE                },
-    { WWT_BUTTON,           0,  130,    239,    24,     35,     STR_TRACK_MANAGE_DELETE,    STR_NONE                },
+    MakeWidget({ 10, 24}, {110, 12}, WWT_BUTTON, 0, STR_TRACK_MANAGE_RENAME),
+    MakeWidget({130, 24}, {110, 12}, WWT_BUTTON, 0, STR_TRACK_MANAGE_DELETE),
     { WIDGETS_END }
 };
 
 static rct_widget window_track_delete_prompt_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
-    { WWT_BUTTON,           0,  10,     119,    54,     65,     STR_TRACK_MANAGE_DELETE,    STR_NONE                },
-    { WWT_BUTTON,           0,  130,    239,    54,     65,     STR_CANCEL,                 STR_NONE                },
+    MakeWidget({ 10, 54}, {110, 12}, WWT_BUTTON, 0, STR_TRACK_MANAGE_DELETE),
+    MakeWidget({130, 54}, {110, 12}, WWT_BUTTON, 0, STR_CANCEL             ),
     { WIDGETS_END }
 };
 
